@@ -10,6 +10,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
 import { TextField } from '../../components/TextField';
+import { PasswordField } from '../../components/PasswordField';
 import { Button } from '../../components/Button';
 import { colors } from '../../theme/colors';
 import type { AuthStackParamList } from '../../navigation/AuthStack';
@@ -89,20 +90,18 @@ export default function RegisterScreen({ navigation }: Props) {
               setError('');
             }}
           />
-          <TextField
+          <PasswordField
             label="Password"
             placeholder="At least 6 characters"
-            secureTextEntry
             value={password}
             onChangeText={(value) => {
               setPassword(value);
               setError('');
             }}
           />
-          <TextField
+          <PasswordField
             label="Confirm Password"
             placeholder="Re-enter password"
-            secureTextEntry
             value={confirmPassword}
             onChangeText={(value) => {
               setConfirmPassword(value);

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, TextInput } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
-import { sendBuddyRequest } from '../../services/requestService';
+import { getBuddyRequest, sendBuddyRequest } from '../../services/requestService';
 import { submitReport } from '../../services/reportService';
 import { blockUser } from '../../services/userService';
 import { Avatar } from '../../components/Avatar';
@@ -10,6 +10,7 @@ import { Tag } from '../../components/Tag';
 import { Button } from '../../components/Button';
 import { colors } from '../../theme/colors';
 import type { MatchesStackParamList } from '../../navigation/MainTabs';
+import type { FoodBuddyRequest } from '../../types';
 
 type Props = NativeStackScreenProps<MatchesStackParamList, 'UserDetail'>;
 
@@ -19,14 +20,31 @@ export default function UserDetailScreen({ route, navigation }: Props) {
     candidate;
   const { firebaseUser, refreshProfile } = useAuth();
   const [sending, setSending] = useState(false);
+  const [existingRequest, setExistingRequest] = useState<FoodBuddyRequest | null>(null);
+  const [loadingRequest, setLoadingRequest] = useState(true);
   const [reportReason, setReportReason] = useState('');
   const [showReport, setShowReport] = useState(false);
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    getBuddyRequest(firebaseUser.uid, candidateProfile.user_id)
+      .then(setExistingRequest)
+      .finally(() => setLoadingRequest(false));
+  }, [candidateProfile.user_id, firebaseUser]);
 
   const handleSendRequest = async () => {
     if (!firebaseUser) return;
     setSending(true);
     try {
       await sendBuddyRequest(firebaseUser.uid, candidateProfile.user_id);
+      setExistingRequest({
+        request_id: '',
+        participant_ids: [firebaseUser.uid, candidateProfile.user_id].sort(),
+        requester_id: firebaseUser.uid,
+        recipient_id: candidateProfile.user_id,
+        status: 'pending',
+        created_at: Date.now(),
+      });
       Alert.alert('Request sent!', `You'll be notified if ${candidateProfile.display_name} accepts.`);
       navigation.goBack();
     } catch (err: any) {
@@ -101,7 +119,22 @@ export default function UserDetailScreen({ route, navigation }: Props) {
         </Text>
       </View>
 
-      <Button title="Send Food Buddy Request" onPress={handleSendRequest} loading={sending} />
+      <Button
+        title={
+          existingRequest?.status === 'accepted'
+            ? 'Already Connected'
+            : existingRequest?.status === 'rejected'
+              ? 'Request Declined'
+              : existingRequest?.status === 'pending'
+                ? existingRequest.requester_id === firebaseUser?.uid
+                  ? 'Request Sent'
+                  : 'Request Received'
+                : 'Send Food Buddy Request'
+        }
+        onPress={handleSendRequest}
+        loading={sending || loadingRequest}
+        disabled={!!existingRequest || loadingRequest}
+      />
 
       {!showReport ? (
         <Button

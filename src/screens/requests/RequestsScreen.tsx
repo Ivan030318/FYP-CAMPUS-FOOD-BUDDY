@@ -6,14 +6,14 @@ import { getUsersByIds } from '../../services/userService';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { colors } from '../../theme/colors';
-import type { FoodBuddyRequest, UserProfile } from '../../types';
+import type { FoodBuddyRequest, PublicUserProfile } from '../../types';
 
 type Tab = 'incoming' | 'outgoing';
 
 export default function RequestsScreen() {
   const { profile, firebaseUser } = useAuth();
   const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
-  const [usersById, setUsersById] = useState<Record<string, UserProfile>>({});
+  const [usersById, setUsersById] = useState<Record<string, PublicUserProfile>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('incoming');
   const [respondingId, setRespondingId] = useState<string | null>(null);
@@ -48,7 +48,8 @@ export default function RequestsScreen() {
   const handleRespond = async (request: FoodBuddyRequest, accept: boolean) => {
     setRespondingId(request.request_id);
     try {
-      await respondToRequest(request, accept);
+      if (!firebaseUser) return;
+      await respondToRequest(request, firebaseUser.uid, accept);
     } catch (err: any) {
       Alert.alert('Something went wrong', err?.message ?? 'Please try again.');
     } finally {

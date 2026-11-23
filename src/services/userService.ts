@@ -1,60 +1,90 @@
 import {
+  collection,
   doc,
   getDoc,
-  setDoc,
-  updateDoc,
-  collection,
   getDocs,
+  updateDoc,
+  writeBatch,
   arrayUnion,
 } from 'firebase/firestore';
 import { firestore } from '../config/firebase';
-import type { UserProfile } from '../types';
+import type { PrivateUserData, PublicUserProfile, UserProfile } from '../types';
 
 const usersCol = collection(firestore, 'users');
+const privateUsersCol = collection(firestore, 'privateUsers');
 
 export async function createUserProfile(
   uid: string,
   data: { display_name: string; university_email: string }
 ): Promise<UserProfile> {
-  const profile: UserProfile = {
+  const publicProfile: PublicUserProfile = {
     user_id: uid,
     display_name: data.display_name,
-    university_email: data.university_email,
     profile_photo_url: null,
     food_preferences: [],
     available_meal_times: [],
     dining_location: '',
-    blocked_users: [],
     created_at: Date.now(),
   };
-  await setDoc(doc(usersCol, uid), profile);
-  return profile;
+  const privateData: PrivateUserData = {
+    university_email: data.university_email,
+    blocked_users: [],
+  };
+
+  const batch = writeBatch(firestore);
+  batch.set(doc(usersCol, uid), publicProfile);
+  batch.set(doc(privateUsersCol, uid), privateData);
+  await batch.commit();
+  return { ...publicProfile, ...privateData };
 }
 
-export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+export async function getPublicUserProfile(uid: string): Promise<PublicUserProfile | null> {
   const snap = await getDoc(doc(usersCol, uid));
-  return snap.exists() ? (snap.data() as UserProfile) : null;
+  return snap.exists() ? (snap.data() as PublicUserProfile) : null;
+}
+
+/** Fetches the signed-in user's combined public and private profile. */
+export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+  const [publicProfile, privateSnapshot] = await Promise.all([
+    getPublicUserProfile(uid),
+    getDoc(doc(privateUsersCol, uid)),
+  ]);
+  if (!publicProfile) return null;
+  // Temporary compatibility for existing test accounts. Run scripts/migrate-user-profiles.mjs
+  // before publishing the new rules so this fallback is no longer needed in stored documents.
+  if (!privateSnapshot.exists()) {
+    const legacy = publicProfile as PublicUserProfile & Partial<PrivateUserData>;
+    if (!legacy.university_email) return null;
+    return {
+      ...publicProfile,
+      university_email: legacy.university_email,
+      blocked_users: legacy.blocked_users ?? [],
+    };
+  }
+  return { ...publicProfile, ...(privateSnapshot.data() as PrivateUserData) };
 }
 
 export async function updateUserProfile(
   uid: string,
-  data: Partial<Omit<UserProfile, 'user_id' | 'created_at'>>
+  data: Partial<Omit<PublicUserProfile, 'user_id' | 'created_at'>>
 ): Promise<void> {
   await updateDoc(doc(usersCol, uid), data);
 }
 
-export async function getAllOtherUsers(excludeUid: string): Promise<UserProfile[]> {
+export async function getAllOtherUsers(excludeUid: string): Promise<PublicUserProfile[]> {
   const snap = await getDocs(usersCol);
   return snap.docs
-    .map((d) => d.data() as UserProfile)
-    .filter((u) => u.user_id !== excludeUid);
+    .map((item) => item.data() as PublicUserProfile)
+    .filter((profile) => profile.user_id !== excludeUid);
 }
 
-export async function getUsersByIds(uids: string[]): Promise<Record<string, UserProfile>> {
-  const result: Record<string, UserProfile> = {};
+export async function getUsersByIds(
+  uids: string[]
+): Promise<Record<string, PublicUserProfile>> {
+  const result: Record<string, PublicUserProfile> = {};
   await Promise.all(
     uids.map(async (uid) => {
-      const profile = await getUserProfile(uid);
+      const profile = await getPublicUserProfile(uid);
       if (profile) result[uid] = profile;
     })
   );
@@ -62,7 +92,8 @@ export async function getUsersByIds(uids: string[]): Promise<Record<string, User
 }
 
 export async function blockUser(uid: string, blockedUid: string): Promise<void> {
-  await updateDoc(doc(usersCol, uid), {
+  if (uid === blockedUid) throw new Error('You cannot block yourself.');
+  await updateDoc(doc(privateUsersCol, uid), {
     blocked_users: arrayUnion(blockedUid),
   });
 }

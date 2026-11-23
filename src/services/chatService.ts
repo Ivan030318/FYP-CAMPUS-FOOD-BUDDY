@@ -1,7 +1,7 @@
 import {
-  addDoc,
   collection,
   doc,
+  addDoc,
   updateDoc,
   onSnapshot,
   query,
@@ -13,16 +13,6 @@ import { firestore } from '../config/firebase';
 import type { Chat, Message } from '../types';
 
 const chatsCol = collection(firestore, 'chats');
-
-export async function createChatForRequest(requestId: string, userIds: string[]): Promise<string> {
-  const docRef = await addDoc(chatsCol, {
-    request_id: requestId,
-    user_ids: userIds,
-    last_message_preview: 'You are now matched! Say hi 👋',
-    last_message_time: Date.now(),
-  });
-  return docRef.id;
-}
 
 export function subscribeToMyChats(uid: string, callback: (chats: Chat[]) => void): Unsubscribe {
   const q = query(chatsCol, where('user_ids', 'array-contains', uid));
@@ -53,15 +43,19 @@ export async function sendMessage(
   senderId: string,
   textContent: string
 ): Promise<void> {
+  const text = textContent.trim();
+  if (!text) throw new Error('Messages cannot be empty.');
+  if (text.length > 1000) throw new Error('Messages must be 1,000 characters or fewer.');
+
   const sentAt = Date.now();
   await addDoc(messagesCol(chatId), {
     chat_id: chatId,
     sender_id: senderId,
-    text_content: textContent,
+    text_content: text,
     sent_at: sentAt,
   });
   await updateDoc(doc(chatsCol, chatId), {
-    last_message_preview: textContent.slice(0, 80),
+    last_message_preview: text.slice(0, 80),
     last_message_time: sentAt,
   });
 }

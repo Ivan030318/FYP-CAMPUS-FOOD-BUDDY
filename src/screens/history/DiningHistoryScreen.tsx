@@ -5,7 +5,7 @@ import { subscribeToMyRequests } from '../../services/requestService';
 import { getUsersByIds } from '../../services/userService';
 import { Avatar } from '../../components/Avatar';
 import { colors } from '../../theme/colors';
-import type { FoodBuddyRequest, UserProfile } from '../../types';
+import type { FoodBuddyRequest, PublicUserProfile } from '../../types';
 
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString(undefined, {
@@ -18,7 +18,7 @@ function formatDate(ts: number): string {
 export default function DiningHistoryScreen() {
   const { firebaseUser } = useAuth();
   const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
-  const [usersById, setUsersById] = useState<Record<string, UserProfile>>({});
+  const [usersById, setUsersById] = useState<Record<string, PublicUserProfile>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -12,8 +12,8 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
 - **Profile** — set food preferences, available meal times and dining location; edit anytime.
 - **Matching** — rule-based match list scored on shared meal times (highest weight), shared
   food preferences, and same dining location.
-- **Food buddy requests** — send a request from a match's profile; accept/reject incoming
-  requests from the Requests tab; accepting auto-creates a chat.
+- **Food buddy requests** — one request per pair; only the recipient can accept/reject a
+  pending request. Accepting atomically creates the pair's one chat.
 - **Real-time chat** — one chat per accepted match, backed by Firestore `onSnapshot` listeners.
 - **Dining history** — list of all accepted matches.
 - **Report / Block** — report a user (stored for admin review) or block them from your match
@@ -55,6 +55,30 @@ firestore.rules            Security rules matching the ERD (users/requests/chats
    firebase deploy --only firestore:rules
    ```
 
+### Phase 1 data migration (required for existing accounts)
+
+Phase 1 separates public matching profiles from private account data. New accounts are created
+with both documents automatically. Before publishing the Phase 1 rules, migrate existing account
+documents so email addresses and block lists are no longer stored in the public `users` collection.
+
+1. Firebase Console → **Project settings** → **Service accounts** → **Generate new private key**.
+   Save it outside this repository (it is ignored if named `service-account*.json`). Never commit it.
+2. Install the migration dependency once: `npm install --save-dev firebase-admin`.
+3. In PowerShell, point the Admin SDK at the downloaded file and run a dry run:
+   ```powershell
+   $env:GOOGLE_APPLICATION_CREDENTIALS = 'C:\path\to\service-account.json'
+   npm run migrate:profiles -- --dry-run
+   ```
+4. If the count is correct, rerun without `--dry-run`:
+   ```powershell
+   npm run migrate:profiles
+   ```
+5. Confirm Firestore now has `privateUsers/{uid}` documents and `users/{uid}` contains no
+   `university_email` or `blocked_users` fields. Then publish [`firestore.rules`](firestore.rules).
+
+The migration is idempotent for legacy profiles: running it again simply rewrites the same public
+and private values. Delete the downloaded service-account JSON when you finish.
+
 ## 2. Configure the app
 
 ```bash
@@ -84,7 +108,8 @@ Matches the ERD/Data Dictionary in FYP1 Chapter 4, implemented as Firestore coll
 
 | Collection | Purpose |
 |---|---|
-| `users/{uid}` | profile: display_name, university_email, food_preferences[], available_meal_times[], dining_location, blocked_users[] |
+| `users/{uid}` | **public** matching profile: display_name, photo, food_preferences[], available_meal_times[], dining_location |
+| `privateUsers/{uid}` | **owner-only** university_email and blocked_users[] |
 | `foodBuddyRequests/{id}` | requester_id, recipient_id, status (pending/accepted/rejected) |
 | `chats/{id}` | request_id, user_ids[], last_message_preview, last_message_time |
 | `chats/{id}/messages/{id}` | sender_id, text_content, sent_at (subcollection, not a top-level collection, so security rules can scope access to just the two chat members) |

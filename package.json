@@ -23,13 +23,15 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "firebase-admin": "^14.5.1",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "migrate:profiles": "node scripts/migrate-user-profiles.mjs"
   },
   "private": true
 }

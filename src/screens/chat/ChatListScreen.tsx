@@ -6,7 +6,7 @@ import { subscribeToMyChats } from '../../services/chatService';
 import { getUsersByIds } from '../../services/userService';
 import { Avatar } from '../../components/Avatar';
 import { colors } from '../../theme/colors';
-import type { Chat, UserProfile } from '../../types';
+import type { Chat, PublicUserProfile } from '../../types';
 import type { ChatsStackParamList } from '../../navigation/MainTabs';
 
 type Props = NativeStackScreenProps<ChatsStackParamList, 'ChatList'>;
@@ -21,7 +21,7 @@ function formatTime(ts: number): string {
 export default function ChatListScreen({ navigation }: Props) {
   const { firebaseUser } = useAuth();
   const [chats, setChats] = useState<Chat[]>([]);
-  const [usersById, setUsersById] = useState<Record<string, UserProfile>>({});
+  const [usersById, setUsersById] = useState<Record<string, PublicUserProfile>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -1,21 +1,25 @@
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { TextInput, View, Text, StyleSheet, TextInputProps } from 'react-native';
 import { colors } from '../theme/colors';
 
 interface Props extends TextInputProps {
   label: string;
   error?: string;
+  rightAccessory?: ReactNode;
 }
 
-export function TextField({ label, error, style, ...rest }: Props) {
+export function TextField({ label, error, style, rightAccessory, ...rest }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput
-        placeholderTextColor={colors.textMuted}
-        style={[styles.input, !!error && styles.inputError, style]}
-        {...rest}
-      />
+      <View style={[styles.inputShell, !!error && styles.inputError]}>
+        <TextInput
+          placeholderTextColor={colors.textMuted}
+          style={[styles.input, rightAccessory ? styles.inputWithAccessory : undefined, style]}
+          {...rest}
+        />
+        {rightAccessory}
+      </View>
       {!!error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
@@ -32,8 +36,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#EBDDD6',
+    flex: 1,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -41,9 +44,9 @@ const styles = StyleSheet.create({
     color: colors.text,
     backgroundColor: '#FFFCFA',
   },
-  inputError: {
-    borderColor: colors.danger,
-  },
+  inputShell: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#EBDDD6', borderRadius: 14, backgroundColor: '#FFFCFA' },
+  inputWithAccessory: { flex: 1, paddingRight: 4 },
+  inputError: { borderColor: colors.danger },
   error: {
     color: colors.danger,
     fontSize: 12,

@@ -19,20 +19,28 @@ export const FOOD_PREFERENCES = [
 ] as const;
 export type FoodPreference = (typeof FOOD_PREFERENCES)[number];
 
-export interface UserProfile {
+export interface PublicUserProfile {
   user_id: string;
   display_name: string;
-  university_email: string;
   profile_photo_url: string | null;
   food_preferences: string[];
   available_meal_times: string[];
   dining_location: string;
-  blocked_users: string[];
   created_at: number;
 }
 
+export interface PrivateUserData {
+  university_email: string;
+  blocked_users: string[];
+}
+
+/** The signed-in user's combined public + private profile. */
+export interface UserProfile extends PublicUserProfile, PrivateUserData {}
+
 export interface FoodBuddyRequest {
   request_id: string;
+  /** Lexicographically ordered, immutable IDs used to enforce one request per pair. */
+  participant_ids: string[];
   requester_id: string;
   recipient_id: string;
   status: RequestStatus;

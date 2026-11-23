@@ -1,7 +1,7 @@
-import type { UserProfile } from '../types';
+import type { PublicUserProfile, UserProfile } from '../types';
 
 export interface MatchCandidate {
-  profile: UserProfile;
+  profile: PublicUserProfile;
   score: number;
   sharedFoodPreferences: string[];
   sharedMealTimes: string[];
@@ -13,7 +13,7 @@ export interface MatchCandidate {
  * location are the three matching factors). Weighted so shared meal time counts most,
  * since that is the hardest constraint to satisfy for an actual shared meal.
  */
-export function scoreMatch(current: UserProfile, candidate: UserProfile): MatchCandidate {
+export function scoreMatch(current: UserProfile, candidate: PublicUserProfile): MatchCandidate {
   const sharedFoodPreferences = candidate.food_preferences.filter((p) =>
     current.food_preferences.includes(p)
   );
@@ -30,7 +30,7 @@ export function scoreMatch(current: UserProfile, candidate: UserProfile): MatchC
   return { profile: candidate, score, sharedFoodPreferences, sharedMealTimes, sameDiningLocation };
 }
 
-export function buildMatchList(current: UserProfile, others: UserProfile[]): MatchCandidate[] {
+export function buildMatchList(current: UserProfile, others: PublicUserProfile[]): MatchCandidate[] {
   return others
     .filter((u) => !current.blocked_users.includes(u.user_id))
     .map((u) => scoreMatch(current, u))
