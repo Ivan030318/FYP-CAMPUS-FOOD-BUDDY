@@ -24,9 +24,11 @@ export default function UserDetailScreen({ route, navigation }: Props) {
   const [loadingRequest, setLoadingRequest] = useState(true);
   const [reportReason, setReportReason] = useState('');
   const [showReport, setShowReport] = useState(false);
+  const [requestError, setRequestError] = useState('');
 
   useEffect(() => {
     if (!firebaseUser) return;
+    setRequestError('');
     getBuddyRequest(firebaseUser.uid, candidateProfile.user_id)
       .then(setExistingRequest)
       .finally(() => setLoadingRequest(false));
@@ -48,7 +50,7 @@ export default function UserDetailScreen({ route, navigation }: Props) {
       Alert.alert('Request sent!', `You'll be notified if ${candidateProfile.display_name} accepts.`);
       navigation.goBack();
     } catch (err: any) {
-      Alert.alert('Could not send request', err?.message ?? 'Please try again.');
+      setRequestError(err?.message ?? 'Could not send the request. Please try again.');
     } finally {
       setSending(false);
     }
@@ -135,6 +137,7 @@ export default function UserDetailScreen({ route, navigation }: Props) {
         loading={sending || loadingRequest}
         disabled={!!existingRequest || loadingRequest}
       />
+      {requestError ? <Text style={styles.requestError}>{requestError}</Text> : null}
 
       {!showReport ? (
         <Button
@@ -169,6 +172,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 22, fontWeight: '800', color: colors.navy, marginTop: 12 },
   scorePill: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 11, paddingVertical: 7, marginTop: 10 },
   score: { fontSize: 12, color: colors.primaryDark, fontWeight: '800' },
+  requestError: { color: colors.danger, backgroundColor: '#FFF1F0', borderRadius: 10, padding: 10, fontSize: 13, marginTop: 10 },
   section: { backgroundColor: colors.card, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 14 },
   sectionTitle: { fontSize: 12, fontWeight: '800', color: colors.textMuted, marginBottom: 10 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap' },

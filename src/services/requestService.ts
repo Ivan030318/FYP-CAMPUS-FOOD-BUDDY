@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDocs,
   onSnapshot,
   or,
   query,
@@ -26,12 +27,16 @@ export async function getBuddyRequest(
   secondUid: string
 ): Promise<FoodBuddyRequest | null> {
   const requestId = getBuddyRequestId(firstUid, secondUid);
-  const snapshot = await runTransaction(firestore, async (transaction) =>
-    transaction.get(doc(requestsCol, requestId))
+  // Query only records involving the signed-in user. This avoids a denied read when the
+  // deterministic document does not exist yet, while preserving private request visibility.
+  const snapshot = await getDocs(
+    query(
+      requestsCol,
+      or(where('requester_id', '==', firstUid), where('recipient_id', '==', firstUid))
+    )
   );
-  return snapshot.exists()
-    ? ({ request_id: snapshot.id, ...snapshot.data() } as FoodBuddyRequest)
-    : null;
+  const match = snapshot.docs.find((item) => item.id === requestId);
+  return match ? ({ request_id: match.id, ...match.data() } as FoodBuddyRequest) : null;
 }
 
 export async function sendBuddyRequest(requesterId: string, recipientId: string): Promise<string> {
@@ -39,23 +44,23 @@ export async function sendBuddyRequest(requesterId: string, recipientId: string)
   const requestId = getBuddyRequestId(requesterId, recipientId);
   const requestRef = doc(requestsCol, requestId);
 
-  await runTransaction(firestore, async (transaction) => {
-    const existing = await transaction.get(requestRef);
-    if (existing.exists()) {
-      const status = existing.data().status as RequestStatus;
-      if (status === 'pending') throw new BuddyRequestError('A request between you already exists.');
-      if (status === 'accepted') throw new BuddyRequestError('You are already connected as food buddies.');
-      throw new BuddyRequestError('This request was previously declined.');
-    }
-
-    transaction.set(requestRef, {
-      participant_ids: [requesterId, recipientId].sort(),
-      requester_id: requesterId,
-      recipient_id: recipientId,
-      status: 'pending' as RequestStatus,
-      created_at: Date.now(),
+  try {
+    await runTransaction(firestore, async (transaction) => {
+      // create(), unlike set(), fails atomically if this pair already has a request.
+      transaction.create(requestRef, {
+        participant_ids: [requesterId, recipientId].sort(),
+        requester_id: requesterId,
+        recipient_id: recipientId,
+        status: 'pending' as RequestStatus,
+        created_at: Date.now(),
+      });
     });
-  });
+  } catch (error: any) {
+    if (error?.code === 'already-exists' || error?.code === 'failed-precondition') {
+      throw new BuddyRequestError('A request or buddy connection between you already exists.');
+    }
+    throw error;
+  }
   return requestId;
 }
 
