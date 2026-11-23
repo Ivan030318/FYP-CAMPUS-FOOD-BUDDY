@@ -5,6 +5,10 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isSelf(uid) { return isSignedIn() && request.auth.uid == uid; }
     function isChatMember(chat) { return isSignedIn() && request.auth.uid in chat.data.user_ids; }
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid));
+    }
 
     // Public matching data only. Email and blocked users live in privateUsers/{uid}.
     match /users/{uid} {
@@ -111,11 +115,28 @@ service cloud.firestore {
       }
     }
 
+    // An admin role is assigned manually in Firebase Console. Clients cannot create roles.
+    match /adminUsers/{uid} {
+      allow read: if isSelf(uid);
+      allow create, update, delete: if false;
+    }
+
     match /reports/{reportId} {
       allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly([
+          'reporter_id', 'reported_user_id', 'reason', 'status', 'submitted_at'
+        ])
         && request.resource.data.reporter_id == request.auth.uid
-        && request.resource.data.reporter_id != request.resource.data.reported_user_id;
-      allow read, update, delete: if false;
+        && request.resource.data.reporter_id != request.resource.data.reported_user_id
+        && request.resource.data.status == 'pending'
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0
+        && request.resource.data.reason.size() <= 1000;
+      allow read: if isAdmin();
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && (request.resource.data.status == 'pending' || request.resource.data.status == 'resolved');
+      allow delete: if false;
     }
   }
 }

@@ -22,6 +22,8 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
   actually dined together).
 - **Report / Block** — report a user or block/unblock them. A block hides the user from matching
   and prevents new requests in either direction.
+- **Admin report review** — a role-protected dashboard lets an assigned admin review reports and
+  mark them resolved.
 
 Not yet built (see FYP1 Chapter 6 "Future Work" — beyond the core-features pass done here):
 push notifications (FCM), the admin web console for managing users/reports, and refinements
@@ -92,6 +94,18 @@ cp .env.example .env
 Fill in `.env` with the values from step 1.4 (apiKey, authDomain, projectId, storageBucket,
 messagingSenderId, appId). These are `EXPO_PUBLIC_*` variables, so Expo inlines them into the
 JS bundle at build time — restart the dev server after editing `.env`.
+
+### Enable the admin report dashboard
+
+After publishing the updated [`firestore.rules`](firestore.rules), assign the admin role once:
+
+1. Firebase Console → **Authentication** → **Users** → copy the UID of your own test account.
+2. Firestore Database → start collection **adminUsers** → set the document ID to that UID.
+3. Add one field: `role` (string) with the value `admin`, then save.
+4. Sign out and sign in again. **Admin: Review Reports** appears in Profile.
+
+Only a Firebase Console administrator can create this document; the app's own Firestore Rules do
+not permit any user to assign themselves a role.
 
 ## 3. Install & run
 
