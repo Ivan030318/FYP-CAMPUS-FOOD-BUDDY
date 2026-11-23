@@ -46,8 +46,9 @@ export async function sendBuddyRequest(requesterId: string, recipientId: string)
 
   try {
     await runTransaction(firestore, async (transaction) => {
-      // create(), unlike set(), fails atomically if this pair already has a request.
-      transaction.create(requestRef, {
+      // With the Phase 1 Rules, this is permitted only when the document is new. If another
+      // request wins the race first, the attempted write is an update and Rules rejects it.
+      transaction.set(requestRef, {
         participant_ids: [requesterId, recipientId].sort(),
         requester_id: requesterId,
         recipient_id: recipientId,
@@ -56,7 +57,11 @@ export async function sendBuddyRequest(requesterId: string, recipientId: string)
       });
     });
   } catch (error: any) {
-    if (error?.code === 'already-exists' || error?.code === 'failed-precondition') {
+    if (
+      error?.code === 'already-exists' ||
+      error?.code === 'failed-precondition' ||
+      error?.code === 'permission-denied'
+    ) {
       throw new BuddyRequestError('A request or buddy connection between you already exists.');
     }
     throw error;
