@@ -71,18 +71,23 @@ export async function sendBuddyRequest(requesterId: string, recipientId: string)
 
 export function subscribeToMyRequests(
   uid: string,
-  callback: (requests: FoodBuddyRequest[]) => void
+  callback: (requests: FoodBuddyRequest[]) => void,
+  onError?: (error: Error) => void
 ): Unsubscribe {
   const requestQuery = query(
     requestsCol,
     or(where('requester_id', '==', uid), where('recipient_id', '==', uid))
   );
-  return onSnapshot(requestQuery, (snap) => {
-    const requests = snap.docs
-      .map((item) => ({ request_id: item.id, ...item.data() } as FoodBuddyRequest))
-      .sort((first, second) => second.created_at - first.created_at);
-    callback(requests);
-  });
+  return onSnapshot(
+    requestQuery,
+    (snap) => {
+      const requests = snap.docs
+        .map((item) => ({ request_id: item.id, ...item.data() } as FoodBuddyRequest))
+        .sort((first, second) => (second.responded_at ?? second.created_at) - (first.responded_at ?? first.created_at));
+      callback(requests);
+    },
+    onError
+  );
 }
 
 export async function getMyRequests(uid: string): Promise<FoodBuddyRequest[]> {
@@ -113,19 +118,20 @@ export async function respondToRequest(
     if (data.recipient_id !== responderId) throw new BuddyRequestError('Only the recipient can respond.');
     if (data.status !== 'pending') throw new BuddyRequestError('This request has already been handled.');
 
+    const respondedAt = Date.now();
     if (!accept) {
-      transaction.update(requestRef, { status: 'rejected' as RequestStatus });
+      transaction.update(requestRef, { status: 'rejected' as RequestStatus, responded_at: respondedAt });
       return;
     }
 
-    transaction.update(requestRef, { status: 'accepted' as RequestStatus });
+    transaction.update(requestRef, { status: 'accepted' as RequestStatus, responded_at: respondedAt });
     // A chat cannot already exist while the request is pending. The Rules permit this create
     // only together with the accepted request update, so no pre-read of a missing chat is needed.
     transaction.set(chatRef, {
       request_id: request.request_id,
       user_ids: [data.requester_id, data.recipient_id],
       last_message_preview: 'You are now matched! Say hi 👋',
-      last_message_time: Date.now(),
+      last_message_time: respondedAt,
     });
   });
 }

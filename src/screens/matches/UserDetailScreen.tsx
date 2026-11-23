@@ -49,7 +49,7 @@ export default function UserDetailScreen({ route, navigation }: Props) {
         status: 'pending',
         created_at: Date.now(),
       });
-      Alert.alert('Request sent!', `You'll be notified if ${candidateProfile.display_name} accepts.`);
+      Alert.alert('Request sent!', `Check Updates when ${candidateProfile.display_name} responds.`);
       navigation.goBack();
     } catch (err: any) {
       setRequestError(err?.message ?? 'Could not send the request. Please try again.');

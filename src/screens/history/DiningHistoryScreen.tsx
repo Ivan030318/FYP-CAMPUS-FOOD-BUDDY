@@ -31,7 +31,7 @@ export default function DiningHistoryScreen() {
   }, [firebaseUser]);
 
   const accepted = useMemo(
-    () => requests.filter((r) => r.status === 'accepted').sort((a, b) => b.created_at - a.created_at),
+    () => requests.filter((r) => r.status === 'accepted').sort((a, b) => (b.responded_at ?? b.created_at) - (a.responded_at ?? a.created_at)),
     [requests]
   );
 
@@ -83,7 +83,7 @@ export default function DiningHistoryScreen() {
             <Avatar name={other.display_name} uri={other.profile_photo_url} size={40} />
             <View style={styles.cardBody}>
               <Text style={styles.name}>Matched with {other.display_name}</Text>
-              <Text style={styles.date}>{formatDate(item.created_at)}</Text>
+              <Text style={styles.date}>{formatDate(item.responded_at ?? item.created_at)}</Text>
             </View>
             <View style={styles.doneBadge}><Text style={styles.doneText}>Connected</Text></View>
           </View>

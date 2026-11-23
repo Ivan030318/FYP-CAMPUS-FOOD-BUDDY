@@ -65,7 +65,7 @@ export default function UpdatesScreen() {
         : request.status === 'accepted'
           ? received ? 'You accepted this food buddy request' : 'accepted your food buddy request'
           : received ? 'You declined this food buddy request' : 'declined your food buddy request';
-      return { id: `request-${request.request_id}`, kind, otherUserId, timestamp: request.created_at, detail };
+      return { id: `request-${request.request_id}`, kind, otherUserId, timestamp: request.responded_at ?? request.created_at, detail };
     });
     const chatUpdates = chats.map((chat) => {
       const otherUserId = chat.user_ids.find((id) => id !== firebaseUser.uid) ?? firebaseUser.uid;

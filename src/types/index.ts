@@ -45,6 +45,8 @@ export interface FoodBuddyRequest {
   recipient_id: string;
   status: RequestStatus;
   created_at: number;
+  /** Set by the recipient when they accept or reject the request. */
+  responded_at?: number;
 }
 
 export interface Chat {

@@ -25,10 +25,13 @@ export default function ChatRoomScreen({ route }: Props) {
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
+  const [loadError, setLoadError] = useState('');
   const listRef = useRef<FlatList<Message>>(null);
 
   useEffect(() => {
-    const unsubscribe = subscribeToMessages(chatId, setMessages);
+    const unsubscribe = subscribeToMessages(chatId, setMessages, () => {
+      setLoadError('Could not load messages. Check your connection and try again.');
+    });
     return unsubscribe;
   }, [chatId]);
 
@@ -75,6 +78,7 @@ export default function ChatRoomScreen({ route }: Props) {
           );
         }}
       />
+      {loadError ? <Text style={styles.errorText}>{loadError}</Text> : null}
       {sendError ? <Text style={styles.errorText}>{sendError}</Text> : null}
       <View style={styles.inputRow}>
         <TextInput

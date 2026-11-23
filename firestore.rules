@@ -9,6 +9,24 @@ service cloud.firestore {
       return isSignedIn()
         && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid));
     }
+    function isValidPublicProfile(data, uid) {
+      return data.user_id == uid
+        && data.display_name is string
+        && data.display_name.size() >= 2
+        && data.display_name.size() <= 50
+        && data.profile_photo_url == null
+        && data.food_preferences is list
+        && data.food_preferences.hasOnly([
+          'No Specific Preference', 'Halal Food', 'Vegetarian Food', 'Seafood', 'Western Food', 'Asian Food'
+        ])
+        && data.available_meal_times is list
+        && data.available_meal_times.hasOnly([
+          'Breakfast', 'Lunch', 'Tea Break / Afternoon Snack', 'Dinner'
+        ])
+        && data.dining_location is string
+        && data.dining_location.size() <= 100
+        && data.created_at is number;
+    }
 
     // Public matching data only. Email and blocked users live in privateUsers/{uid}.
     match /users/{uid} {
@@ -18,14 +36,15 @@ service cloud.firestore {
           'user_id', 'display_name', 'profile_photo_url', 'food_preferences',
           'available_meal_times', 'dining_location', 'created_at'
         ])
-        && request.resource.data.user_id == uid;
+        && isValidPublicProfile(request.resource.data, uid);
       allow update: if isSelf(uid)
         && request.resource.data.keys().hasOnly([
           'user_id', 'display_name', 'profile_photo_url', 'food_preferences',
           'available_meal_times', 'dining_location', 'created_at'
         ])
         && request.resource.data.user_id == resource.data.user_id
-        && request.resource.data.created_at == resource.data.created_at;
+        && request.resource.data.created_at == resource.data.created_at
+        && isValidPublicProfile(request.resource.data, uid);
       allow delete: if false;
     }
 
@@ -56,14 +75,16 @@ service cloud.firestore {
         && requestId == request.resource.data.participant_ids[0] + '_' + request.resource.data.participant_ids[1]
         && !exists(/databases/$(database)/documents/blocks/$(request.resource.data.requester_id + '_' + request.resource.data.recipient_id))
         && !exists(/databases/$(database)/documents/blocks/$(request.resource.data.recipient_id + '_' + request.resource.data.requester_id))
-        && request.resource.data.status == 'pending';
+        && request.resource.data.status == 'pending'
+        && request.resource.data.created_at is number;
 
       // Only the recipient may make the one-way pending -> accepted/rejected decision.
       allow update: if isSignedIn()
         && resource.data.recipient_id == request.auth.uid
         && resource.data.status == 'pending'
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-        && (request.resource.data.status == 'accepted' || request.resource.data.status == 'rejected');
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'responded_at'])
+        && (request.resource.data.status == 'accepted' || request.resource.data.status == 'rejected')
+        && request.resource.data.responded_at is number;
       allow delete: if false;
     }
 
@@ -110,7 +131,8 @@ service cloud.firestore {
           && request.resource.data.chat_id == chatId
           && request.resource.data.sender_id == request.auth.uid
           && request.resource.data.text_content.size() > 0
-          && request.resource.data.text_content.size() <= 1000;
+        && request.resource.data.text_content.size() <= 1000
+        && request.resource.data.sent_at is number;
         allow update, delete: if false;
       }
     }
@@ -131,7 +153,8 @@ service cloud.firestore {
         && request.resource.data.status == 'pending'
         && request.resource.data.reason is string
         && request.resource.data.reason.size() > 0
-        && request.resource.data.reason.size() <= 1000;
+        && request.resource.data.reason.size() <= 1000
+        && request.resource.data.submitted_at is number;
       allow read: if isAdmin();
       allow update: if isAdmin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])

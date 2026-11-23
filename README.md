@@ -14,8 +14,9 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
 - **Matching** — explainable compatibility score: shared meal times (50%), food preferences
   (30%), and same dining location (20%). Pending/accepted connections and low matches are hidden.
 - **Food buddy requests** — one request per pair; only the recipient can accept/reject a
-  pending request. Accepting atomically creates the pair's one chat.
-- **Real-time chat** — one chat per accepted match, backed by Firestore `onSnapshot` listeners.
+  pending request. Accepting atomically creates the pair's one chat and records the response time.
+- **Real-time chat** — one chat per accepted match. A message and its chat-list preview are saved
+  atomically, so they cannot become inconsistent.
 - **Updates** — a free in-app activity feed for buddy-request outcomes and chat activity, with a
   live badge for pending incoming requests.
 - **Buddy history** — list of all accepted food buddy connections (not a claim that students
@@ -136,8 +137,11 @@ Matches the ERD/Data Dictionary in FYP1 Chapter 4, implemented as Firestore coll
 
 ## Known limitations (matches FYP1 Chapter 6 scope)
 
-- No admin console yet — reports are write-only from the client; review them directly in the
-  Firestore console for now.
-- No push notifications yet — new matches/messages only show up while the app is open (pull
-  to refresh on the Matches tab, chats update live via listeners).
+- No device-level push notifications yet — request outcomes appear in the in-app Updates tab while
+  the app is open.
 - Matching is a simple weighted rule-based score, not a learned/optimized algorithm.
+
+## Demonstration testing
+
+Use [`docs/TESTING_CHECKLIST.md`](docs/TESTING_CHECKLIST.md) for the two-account FYP test and
+for collecting evidence screenshots before meeting your supervisor.
