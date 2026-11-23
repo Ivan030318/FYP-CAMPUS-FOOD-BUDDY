@@ -91,7 +91,8 @@ export default function EditProfileScreen() {
           placeholder="e.g. FIST Cafeteria, MMU Food Court"
           value={diningLocation}
           onChangeText={setDiningLocation}
-        /></View>
+          maxLength={100}
+        /><Text style={styles.characterCount}>{diningLocation.length}/100</Text></View>
 
         <Button title="Save Profile" onPress={handleSave} loading={saving} />
       </ScrollView>
@@ -110,4 +111,5 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 14, fontWeight: '800', color: colors.text, marginBottom: 4 },
   sectionHint: { fontSize: 12, color: colors.textMuted, marginBottom: 12 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  characterCount: { color: colors.textMuted, fontSize: 10, textAlign: 'right', marginTop: -12 },
 });

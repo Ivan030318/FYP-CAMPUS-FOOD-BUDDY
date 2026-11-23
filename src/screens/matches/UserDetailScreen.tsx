@@ -24,6 +24,8 @@ export default function UserDetailScreen({ route, navigation }: Props) {
   const [loadingRequest, setLoadingRequest] = useState(true);
   const [reportReason, setReportReason] = useState('');
   const [showReport, setShowReport] = useState(false);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportError, setReportError] = useState('');
   const [requestError, setRequestError] = useState('');
   const [blocking, setBlocking] = useState(false);
   const [blockError, setBlockError] = useState('');
@@ -64,10 +66,18 @@ export default function UserDetailScreen({ route, navigation }: Props) {
       Alert.alert('Reason required', 'Please describe why you are reporting this user.');
       return;
     }
-    await submitReport(firebaseUser.uid, candidateProfile.user_id, reportReason.trim());
-    setShowReport(false);
-    setReportReason('');
-    Alert.alert('Report submitted', 'Thank you, our admin team will review this report.');
+    setReportError('');
+    setReportSubmitting(true);
+    try {
+      await submitReport(firebaseUser.uid, candidateProfile.user_id, reportReason.trim());
+      setShowReport(false);
+      setReportReason('');
+      Alert.alert('Report submitted', 'Thank you, our admin team will review this report.');
+    } catch (err: any) {
+      setReportError(err?.message ?? 'Could not submit this report. Please try again.');
+    } finally {
+      setReportSubmitting(false);
+    }
   };
 
   const handleBlock = async () => {
@@ -159,8 +169,12 @@ export default function UserDetailScreen({ route, navigation }: Props) {
             onChangeText={setReportReason}
             style={styles.reportInput}
             multiline
+            maxLength={1000}
+            editable={!reportSubmitting}
           />
-          <Button title="Submit Report" variant="outline" onPress={handleReport} style={styles.button} />
+          <Text style={styles.counter}>{reportReason.length}/1000</Text>
+          {reportError ? <Text style={styles.requestError}>{reportError}</Text> : null}
+          <Button title="Submit Report" variant="outline" onPress={handleReport} loading={reportSubmitting} style={styles.button} />
         </View>
       )}
 
@@ -187,6 +201,7 @@ const styles = StyleSheet.create({
   value: { fontSize: 15, color: colors.text },
   button: { marginTop: 12 },
   reportBox: { marginTop: 12 },
+  counter: { color: colors.textMuted, fontSize: 10, textAlign: 'right', marginTop: 4 },
   reportInput: {
     borderWidth: 1,
     borderColor: colors.border,
