@@ -18,11 +18,13 @@ import type { AuthStackParamList } from '../../navigation/AuthStack';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
-  const { login } = useAuth();
+  const { login, resetPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -30,6 +32,7 @@ export default function LoginScreen({ navigation }: Props) {
       return;
     }
     setError('');
+    setNotice('');
     setLoading(true);
     try {
       await login(email.trim(), password);
@@ -46,6 +49,28 @@ export default function LoginScreen({ navigation }: Props) {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email.trim()) {
+      setNotice('Enter your email address first, then tap Forgot password.');
+      return;
+    }
+    setError('');
+    setNotice('');
+    setResetting(true);
+    try {
+      await resetPassword(email.trim());
+      setNotice('Password reset email sent. Check your inbox and spam folder.');
+    } catch (err: any) {
+      setNotice(
+        err?.code === 'auth/invalid-email'
+          ? 'Please enter a valid email address.'
+          : 'Could not send the reset email. Please try again.'
+      );
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -74,6 +99,7 @@ export default function LoginScreen({ navigation }: Props) {
             onChangeText={(value) => {
               setEmail(value);
               setError('');
+              setNotice('');
             }}
           />
           <PasswordField
@@ -83,10 +109,20 @@ export default function LoginScreen({ navigation }: Props) {
             onChangeText={(value) => {
               setPassword(value);
               setError('');
+              setNotice('');
             }}
           />
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {notice ? <Text style={styles.noticeText}>{notice}</Text> : null}
           <Button title="Log In" onPress={handleLogin} loading={loading} />
+          <Button
+            title="Forgot password?"
+            variant="outline"
+            onPress={handlePasswordReset}
+            loading={resetting}
+            disabled={loading}
+            style={styles.resetButton}
+          />
           <Button
             title="New here? Create an account"
             variant="outline"
@@ -153,6 +189,16 @@ const styles = StyleSheet.create({
     marginTop: -4,
     marginBottom: 12,
   },
+  noticeText: {
+    color: colors.success,
+    fontSize: 13,
+    backgroundColor: colors.secondarySoft,
+    borderRadius: 10,
+    padding: 10,
+    marginTop: -4,
+    marginBottom: 12,
+  },
+  resetButton: { marginTop: 12 },
   secondaryButton: {
     marginTop: 12,
   },

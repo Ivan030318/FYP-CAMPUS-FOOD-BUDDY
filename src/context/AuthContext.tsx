@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
+  sendPasswordResetEmail,
   onAuthStateChanged,
   updateProfile,
   type User,
@@ -18,6 +19,7 @@ interface AuthContextValue {
   refreshProfile: () => Promise<void>;
   register: (email: string, password: string, displayName: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -67,13 +69,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   }, []);
 
+  const resetPassword = useCallback(async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  }, []);
+
   const logout = useCallback(async () => {
     await firebaseSignOut(auth);
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ firebaseUser, profile, initializing, refreshProfile, register, login, logout }}
+      value={{ firebaseUser, profile, initializing, refreshProfile, register, login, resetPassword, logout }}
     >
       {children}
     </AuthContext.Provider>

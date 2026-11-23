@@ -8,7 +8,7 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
 ## Features implemented
 
 - **Auth** — email/password registration & login (Firebase Authentication), session persists
-  across app restarts.
+  across app restarts; users can request a Firebase password-reset email from the login page.
 - **Profile** — set food preferences, available meal times and dining location; edit anytime.
   Profiles use a consistent name-initial avatar, so the app stays within Firebase's free plan.
 - **Matching** — explainable compatibility score: shared meal times (50%), food preferences
