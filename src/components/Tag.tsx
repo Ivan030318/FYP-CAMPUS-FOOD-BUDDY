@@ -22,12 +22,11 @@ export function Tag({ label, selected, onPress }: Props) {
 
 const styles = StyleSheet.create({
   tag: {
-    paddingHorizontal: 13,
-    paddingVertical: 9,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: '#F0DFD7',
-    backgroundColor: '#FFFCFA',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 0,
+    backgroundColor: colors.surface,
     marginRight: 8,
     marginBottom: 8,
   },
@@ -38,7 +37,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 13,
     color: colors.text,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   textSelected: {
     color: '#fff',

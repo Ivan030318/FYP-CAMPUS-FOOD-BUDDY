@@ -39,19 +39,19 @@ export function Button({ title, onPress, loading, disabled, variant = 'primary',
 
 const styles = StyleSheet.create({
   base: {
-    borderRadius: 16,
-    paddingVertical: 15,
+    borderRadius: 12,
+    paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: 50,
   },
   primary: {
     backgroundColor: colors.primary,
     shadowColor: colors.primaryDark,
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 3,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   danger: {
     backgroundColor: colors.danger,
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   outline: {
     backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: '#F3C7BA',
+    borderColor: colors.border,
   },
   disabled: {
     opacity: 0.5,
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: '#fff',
-    fontWeight: '700',
+    fontWeight: '600',
     fontSize: 15,
   },
   outlineText: {

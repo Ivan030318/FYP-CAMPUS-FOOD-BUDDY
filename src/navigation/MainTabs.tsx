@@ -50,9 +50,17 @@ const MatchesStackNav = createNativeStackNavigator<MatchesStackParamList>();
 const ChatsStackNav = createNativeStackNavigator<ChatsStackParamList>();
 const ProfileStackNav = createNativeStackNavigator<ProfileStackParamList>();
 
+const stackScreenOptions = {
+  headerStyle: { backgroundColor: colors.card },
+  headerTintColor: colors.primary,
+  headerTitleStyle: { color: colors.text, fontSize: 17, fontWeight: '600' as const },
+  headerShadowVisible: false,
+  contentStyle: { backgroundColor: colors.background },
+};
+
 function MatchesStack() {
   return (
-    <MatchesStackNav.Navigator>
+    <MatchesStackNav.Navigator screenOptions={stackScreenOptions}>
       <MatchesStackNav.Screen
         name="MatchList"
         component={MatchListScreen}
@@ -69,7 +77,7 @@ function MatchesStack() {
 
 function ChatsStack() {
   return (
-    <ChatsStackNav.Navigator>
+    <ChatsStackNav.Navigator screenOptions={stackScreenOptions}>
       <ChatsStackNav.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Chats' }} />
       <ChatsStackNav.Screen
         name="ChatRoom"
@@ -82,7 +90,7 @@ function ChatsStack() {
 
 function ProfileStack() {
   return (
-    <ProfileStackNav.Navigator>
+    <ProfileStackNav.Navigator screenOptions={stackScreenOptions}>
       <ProfileStackNav.Screen
         name="ProfileHome"
         component={ProfileScreen}
@@ -135,8 +143,8 @@ export default function MainTabs() {
         tabBarIcon: () => (
           <Text style={{ fontSize: 20 }}>{TAB_ICONS[route.name as keyof MainTabParamList]}</Text>
         ),
-        tabBarStyle: { height: 66, paddingTop: 7, paddingBottom: 8, borderTopColor: colors.border, backgroundColor: colors.card },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
+        tabBarStyle: { height: 64, paddingTop: 6, paddingBottom: 7, borderTopColor: colors.border, backgroundColor: colors.card, elevation: 0 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
       })}
     >
       <Tab.Screen name="MatchesTab" component={MatchesStack} options={{ title: 'Matches' }} />

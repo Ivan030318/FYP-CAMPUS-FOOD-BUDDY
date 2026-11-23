@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { subscribeToMyRequests, respondToRequest } from '../../services/requestService';
 import { getUsersByIds } from '../../services/userService';
@@ -76,18 +76,18 @@ export default function RequestsScreen() {
         <Text style={styles.title}>Buddy requests</Text>
       </View>
       <View style={styles.tabRow}>
-        <Text
+        <Pressable
           onPress={() => setTab('incoming')}
-          style={[styles.tabLabel, tab === 'incoming' && styles.tabLabelActive]}
+          style={[styles.tab, tab === 'incoming' && styles.tabActive]}
         >
-          Incoming ({incoming.length})
-        </Text>
-        <Text
+          <Text style={[styles.tabLabel, tab === 'incoming' && styles.tabLabelActive]}>Incoming ({incoming.length})</Text>
+        </Pressable>
+        <Pressable
           onPress={() => setTab('outgoing')}
-          style={[styles.tabLabel, tab === 'outgoing' && styles.tabLabelActive]}
+          style={[styles.tab, tab === 'outgoing' && styles.tabActive]}
         >
-          Sent ({outgoing.length})
-        </Text>
+          <Text style={[styles.tabLabel, tab === 'outgoing' && styles.tabLabelActive]}>Sent ({outgoing.length})</Text>
+        </Pressable>
       </View>
       {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
 
@@ -144,33 +144,37 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyText: { color: colors.textMuted, textAlign: 'center' },
-  hero: { backgroundColor: colors.background, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 14 },
-  kicker: { fontSize: 10, letterSpacing: 1.2, fontWeight: '800', color: colors.primary, marginBottom: 5 },
-  title: { fontSize: 25, fontWeight: '800', color: colors.navy },
+  hero: { backgroundColor: colors.background, paddingHorizontal: 20, paddingTop: 22, paddingBottom: 14 },
+  kicker: { fontSize: 11, letterSpacing: 0.5, fontWeight: '700', color: colors.textMuted, marginBottom: 5 },
+  title: { fontSize: 30, fontWeight: '700', color: colors.text },
   tabRow: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    marginHorizontal: 20,
+    marginBottom: 4,
+    padding: 3,
+    borderRadius: 10,
+    backgroundColor: '#E9E9EF',
   },
+  tab: { flex: 1, alignItems: 'center', borderRadius: 8 },
+  tabActive: { backgroundColor: colors.card },
   tabLabel: {
     flex: 1,
     textAlign: 'center',
-    paddingVertical: 15,
+    paddingVertical: 8,
     color: colors.textMuted,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
   },
   tabLabelActive: {
-    color: colors.primary,
-    borderBottomWidth: 2,
-    borderColor: colors.primary,
+    color: colors.text,
+    fontWeight: '600',
   },
   errorText: { color: colors.danger, backgroundColor: '#FFF1F0', marginHorizontal: 20, marginTop: 14, borderRadius: 10, padding: 10, fontSize: 13 },
   list: { padding: 20, flexGrow: 1 },
   card: {
     flexDirection: 'row',
     backgroundColor: colors.card,
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,

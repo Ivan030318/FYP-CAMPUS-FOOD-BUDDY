@@ -28,12 +28,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   placeholder: {
-    backgroundColor: colors.navy,
+    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initial: {
-    color: '#FFE2D7',
-    fontWeight: '700',
+    color: colors.primary,
+    fontWeight: '600',
   },
 });
