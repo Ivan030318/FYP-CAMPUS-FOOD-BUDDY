@@ -15,6 +15,7 @@ import { buildMatchList, type MatchCandidate } from '../../services/matchService
 import { getMyRequests } from '../../services/requestService';
 import { Avatar } from '../../components/Avatar';
 import { Tag } from '../../components/Tag';
+import { Button } from '../../components/Button';
 import { colors } from '../../theme/colors';
 import type { MatchesStackParamList } from '../../navigation/MainTabs';
 
@@ -25,19 +26,26 @@ export default function MatchListScreen({ navigation }: Props) {
   const [matches, setMatches] = useState<MatchCandidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   const load = useCallback(async () => {
     if (!profile) return;
-    const [others, myRequests] = await Promise.all([
-      getAllOtherUsers(profile.user_id),
-      getMyRequests(profile.user_id),
-    ]);
-    const unavailableUserIds = myRequests
-      .filter((request) => request.status === 'pending' || request.status === 'accepted')
-      .map((request) =>
-        request.requester_id === profile.user_id ? request.recipient_id : request.requester_id
-      );
-    setMatches(buildMatchList(profile, others, unavailableUserIds));
+    setLoadError('');
+    try {
+      const [others, myRequests] = await Promise.all([
+        getAllOtherUsers(profile.user_id),
+        getMyRequests(profile.user_id),
+      ]);
+      const unavailableUserIds = myRequests
+        .filter((request) => request.status === 'pending' || request.status === 'accepted')
+        .map((request) =>
+          request.requester_id === profile.user_id ? request.recipient_id : request.requester_id
+        );
+      setMatches(buildMatchList(profile, others, unavailableUserIds));
+    } catch (error: any) {
+      setMatches([]);
+      setLoadError(error?.message ?? 'Could not load matches. Pull down to try again.');
+    }
   }, [profile]);
 
   useEffect(() => {
@@ -52,7 +60,10 @@ export default function MatchListScreen({ navigation }: Props) {
   };
 
   const profileIncomplete =
-    !profile || profile.food_preferences.length === 0 || profile.available_meal_times.length === 0;
+    !profile ||
+    profile.food_preferences.length === 0 ||
+    profile.available_meal_times.length === 0 ||
+    !profile.dining_location.trim();
 
   if (loading) {
     return (
@@ -65,10 +76,18 @@ export default function MatchListScreen({ navigation }: Props) {
   if (profileIncomplete) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyTitle}>Complete your profile first</Text>
-        <Text style={styles.emptySubtitle}>
-          Add your food preferences and meal times in the Profile tab so we can find you a match.
-        </Text>
+        <View style={styles.setupCard}>
+          <Text style={styles.setupEmoji}>🥢</Text>
+          <Text style={styles.emptyTitle}>Complete your dining profile</Text>
+          <Text style={styles.emptySubtitle}>
+            Add your food preferences, meal times and dining spot so we can find compatible buddies.
+          </Text>
+          <Button
+            title="Complete Profile"
+            onPress={() => navigation.getParent()?.navigate('ProfileTab', { screen: 'EditProfile' })}
+            style={styles.setupButton}
+          />
+        </View>
       </View>
     );
   }
@@ -84,6 +103,7 @@ export default function MatchListScreen({ navigation }: Props) {
           <Text style={styles.kicker}>DISCOVER</Text>
           <Text style={styles.pageTitle}>Your food circle</Text>
           <Text style={styles.pageSubtitle}>Compatible students based on time, food and location.</Text>
+          {loadError ? <Text style={styles.errorText}>{loadError}</Text> : null}
         </View>
       }
       ListEmptyComponent={
@@ -131,11 +151,15 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 6 },
   emptySubtitle: { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
+  setupCard: { width: '100%', maxWidth: 340, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 22, padding: 24, alignItems: 'center' },
+  setupEmoji: { fontSize: 36, marginBottom: 12 },
+  setupButton: { alignSelf: 'stretch', marginTop: 18 },
   list: { padding: 20, paddingBottom: 32, flexGrow: 1 },
   intro: { paddingBottom: 20 },
   kicker: { fontSize: 10, letterSpacing: 1.2, fontWeight: '800', color: colors.primary, marginBottom: 5 },
   pageTitle: { fontSize: 28, fontWeight: '800', color: colors.navy },
   pageSubtitle: { fontSize: 13, lineHeight: 19, color: colors.textMuted, marginTop: 6, maxWidth: 300 },
+  errorText: { color: colors.danger, backgroundColor: '#FFF1F0', borderRadius: 10, padding: 10, marginTop: 12, fontSize: 13 },
   card: {
     flexDirection: 'row',
     backgroundColor: colors.card,
