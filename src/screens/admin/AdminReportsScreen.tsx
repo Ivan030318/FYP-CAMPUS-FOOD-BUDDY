@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { resolveReport, subscribeToReports } from '../../services/reportService';
 import { getUsersByIds } from '../../services/userService';
@@ -20,6 +20,7 @@ export default function AdminReportsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'pending' | 'resolved' | 'all'>('pending');
 
   useEffect(() => {
     const unsubscribe = subscribeToReports(setReports);
@@ -33,6 +34,10 @@ export default function AdminReportsScreen() {
   }, [reports]);
 
   const pendingCount = useMemo(() => reports.filter((report) => report.status === 'pending').length, [reports]);
+  const visibleReports = useMemo(
+    () => filter === 'all' ? reports : reports.filter((report) => report.status === filter),
+    [reports, filter]
+  );
 
   const handleResolve = async (reportId: string) => {
     setResolvingId(reportId);
@@ -53,7 +58,7 @@ export default function AdminReportsScreen() {
 
   return (
     <FlatList
-      data={reports}
+      data={visibleReports}
       keyExtractor={(item) => item.report_id}
       contentContainerStyle={styles.list}
       ListHeaderComponent={
@@ -62,9 +67,22 @@ export default function AdminReportsScreen() {
           <Text style={styles.title}>Reports</Text>
           <Text style={styles.helper}>{pendingCount} pending {pendingCount === 1 ? 'report' : 'reports'} to review.</Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
+          <View style={styles.filters}>
+            {(['pending', 'resolved', 'all'] as const).map((option) => (
+              <Pressable
+                key={option}
+                onPress={() => setFilter(option)}
+                style={[styles.filter, filter === option && styles.filterActive]}
+              >
+                <Text style={[styles.filterText, filter === option && styles.filterTextActive]}>
+                  {option === 'all' ? 'All' : option === 'pending' ? `Pending (${pendingCount})` : 'Resolved'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       }
-      ListEmptyComponent={<View style={styles.centered}><Text style={styles.empty}>No reports have been submitted.</Text></View>}
+      ListEmptyComponent={<View style={styles.centered}><Text style={styles.empty}>No {filter === 'all' ? '' : filter} reports to show.</Text></View>}
       renderItem={({ item }) => {
         const reporter = usersById[item.reporter_id]?.display_name ?? 'Unknown student';
         const reported = usersById[item.reported_user_id]?.display_name ?? 'Unknown student';
@@ -90,6 +108,11 @@ const styles = StyleSheet.create({
   kicker: { fontSize: 10, letterSpacing: 1.2, fontWeight: '800', color: colors.primary, marginBottom: 5 },
   title: { fontSize: 28, fontWeight: '800', color: colors.navy },
   helper: { fontSize: 13, color: colors.textMuted, marginTop: 5 },
+  filters: { flexDirection: 'row', gap: 8, marginTop: 16 },
+  filter: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: colors.card },
+  filterActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  filterText: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
+  filterTextActive: { color: '#fff' },
   error: { color: colors.danger, marginTop: 10, fontSize: 13 },
   empty: { color: colors.textMuted, textAlign: 'center' },
   card: { backgroundColor: colors.card, borderRadius: 20, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.border },
