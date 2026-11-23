@@ -9,7 +9,8 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
 
 - **Auth** — email/password registration & login (Firebase Authentication), session persists
   across app restarts.
-- **Profile** — set food preferences, available meal times and dining location; edit anytime.
+- **Profile** — set food preferences, available meal times, dining location and an optional
+  profile photo; edit anytime. Photos are restricted to the owner's Firebase Storage folder.
 - **Matching** — explainable compatibility score: shared meal times (50%), food preferences
   (30%), and same dining location (20%). Pending/accepted connections and low matches are hidden.
 - **Food buddy requests** — one request per pair; only the recipient can accept/reject a
@@ -55,6 +56,9 @@ firestore.rules            Security rules matching the ERD (users/requests/chats
    firebase init firestore   # point it at this folder, keep firestore.rules as-is
    firebase deploy --only firestore:rules
    ```
+6. **Storage** → Get started → create the default Storage bucket. Then open Storage → Rules,
+   replace the editor contents with [`storage.rules`](storage.rules), and click **Publish**.
+   This is required before profile-photo uploads can work.
 
 ### Phase 1 data migration (required for existing accounts)
 
