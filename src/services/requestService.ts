@@ -109,15 +109,14 @@ export async function respondToRequest(
       return;
     }
 
-    const chat = await transaction.get(chatRef);
     transaction.update(requestRef, { status: 'accepted' as RequestStatus });
-    if (!chat.exists()) {
-      transaction.set(chatRef, {
-        request_id: request.request_id,
-        user_ids: [data.requester_id, data.recipient_id],
-        last_message_preview: 'You are now matched! Say hi 👋',
-        last_message_time: Date.now(),
-      });
-    }
+    // A chat cannot already exist while the request is pending. The Rules permit this create
+    // only together with the accepted request update, so no pre-read of a missing chat is needed.
+    transaction.set(chatRef, {
+      request_id: request.request_id,
+      user_ids: [data.requester_id, data.recipient_id],
+      last_message_preview: 'You are now matched! Say hi 👋',
+      last_message_time: Date.now(),
+    });
   });
 }

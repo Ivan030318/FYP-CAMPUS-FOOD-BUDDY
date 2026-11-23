@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { subscribeToMyRequests, respondToRequest } from '../../services/requestService';
 import { getUsersByIds } from '../../services/userService';
@@ -17,6 +17,7 @@ export default function RequestsScreen() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('incoming');
   const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -47,11 +48,12 @@ export default function RequestsScreen() {
 
   const handleRespond = async (request: FoodBuddyRequest, accept: boolean) => {
     setRespondingId(request.request_id);
+    setActionError('');
     try {
       if (!firebaseUser) return;
       await respondToRequest(request, firebaseUser.uid, accept);
     } catch (err: any) {
-      Alert.alert('Something went wrong', err?.message ?? 'Please try again.');
+      setActionError(err?.message ?? 'Could not update this request. Please try again.');
     } finally {
       setRespondingId(null);
     }
@@ -87,6 +89,7 @@ export default function RequestsScreen() {
           Sent ({outgoing.length})
         </Text>
       </View>
+      {actionError ? <Text style={styles.errorText}>{actionError}</Text> : null}
 
       <FlatList
         data={data}
@@ -162,6 +165,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderColor: colors.primary,
   },
+  errorText: { color: colors.danger, backgroundColor: '#FFF1F0', marginHorizontal: 20, marginTop: 14, borderRadius: 10, padding: 10, fontSize: 13 },
   list: { padding: 20, flexGrow: 1 },
   card: {
     flexDirection: 'row',
