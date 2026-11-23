@@ -1,0 +1,122 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useAuth } from '../../context/AuthContext';
+import { subscribeToMyChats } from '../../services/chatService';
+import { getUsersByIds } from '../../services/userService';
+import { Avatar } from '../../components/Avatar';
+import { colors } from '../../theme/colors';
+import type { Chat, UserProfile } from '../../types';
+import type { ChatsStackParamList } from '../../navigation/MainTabs';
+
+type Props = NativeStackScreenProps<ChatsStackParamList, 'ChatList'>;
+
+function formatTime(ts: number): string {
+  const date = new Date(ts);
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+    ' ' +
+    date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+export default function ChatListScreen({ navigation }: Props) {
+  const { firebaseUser } = useAuth();
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [usersById, setUsersById] = useState<Record<string, UserProfile>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    const unsubscribe = subscribeToMyChats(firebaseUser.uid, (list) => {
+      setChats(list);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, [firebaseUser]);
+
+  useEffect(() => {
+    const otherIds = Array.from(
+      new Set(chats.flatMap((c) => c.user_ids).filter((id) => id !== firebaseUser?.uid))
+    );
+    if (otherIds.length === 0) return;
+    getUsersByIds(otherIds).then(setUsersById);
+  }, [chats, firebaseUser]);
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      data={chats}
+      keyExtractor={(item) => item.chat_id}
+      contentContainerStyle={styles.list}
+      ListHeaderComponent={
+        <View style={styles.intro}>
+          <Text style={styles.kicker}>KEEP IN TOUCH</Text>
+          <Text style={styles.title}>Messages</Text>
+        </View>
+      }
+      ListEmptyComponent={
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>
+            No chats yet. Accept a food buddy request to start chatting!
+          </Text>
+        </View>
+      }
+      renderItem={({ item }) => {
+        const otherId = item.user_ids.find((id) => id !== firebaseUser?.uid);
+        const other = otherId ? usersById[otherId] : undefined;
+        if (!other) return null;
+        return (
+          <Pressable
+            style={styles.card}
+            onPress={() =>
+              navigation.navigate('ChatRoom', {
+                chatId: item.chat_id,
+                otherUserName: other.display_name,
+              })
+            }
+          >
+            <Avatar name={other.display_name} uri={other.profile_photo_url} />
+            <View style={styles.cardBody}>
+              <View style={styles.rowBetween}>
+                <Text style={styles.name}>{other.display_name}</Text>
+                <Text style={styles.time}>{formatTime(item.last_message_time)}</Text>
+              </View>
+              <Text style={styles.preview} numberOfLines={1}>
+                {item.last_message_preview}
+              </Text>
+            </View>
+          </Pressable>
+        );
+      }}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  emptyText: { color: colors.textMuted, textAlign: 'center' },
+  list: { padding: 20, flexGrow: 1 },
+  intro: { paddingBottom: 20 },
+  kicker: { fontSize: 10, letterSpacing: 1.2, fontWeight: '800', color: colors.primary, marginBottom: 5 },
+  title: { fontSize: 28, fontWeight: '800', color: colors.navy },
+  card: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cardBody: { marginLeft: 12, flex: 1 },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between' },
+  name: { fontSize: 16, fontWeight: '800', color: colors.text },
+  time: { fontSize: 11, color: colors.textMuted },
+  preview: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
+});

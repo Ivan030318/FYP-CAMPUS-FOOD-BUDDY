@@ -1,0 +1,87 @@
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  updateProfile,
+  type User,
+} from 'firebase/auth';
+import { auth } from '../config/firebase';
+import { createUserProfile, getUserProfile } from '../services/userService';
+import type { UserProfile } from '../types';
+
+interface AuthContextValue {
+  firebaseUser: User | null;
+  profile: UserProfile | null;
+  initializing: boolean;
+  refreshProfile: () => Promise<void>;
+  register: (email: string, password: string, displayName: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [initializing, setInitializing] = useState(true);
+
+  const loadProfile = useCallback(async (uid: string) => {
+    const p = await getUserProfile(uid);
+    setProfile(p);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setFirebaseUser(user);
+      if (user) {
+        await loadProfile(user.uid);
+      } else {
+        setProfile(null);
+      }
+      setInitializing(false);
+    });
+    return unsubscribe;
+  }, [loadProfile]);
+
+  const refreshProfile = useCallback(async () => {
+    if (firebaseUser) await loadProfile(firebaseUser.uid);
+  }, [firebaseUser, loadProfile]);
+
+  const register = useCallback(
+    async (email: string, password: string, displayName: string) => {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(credential.user, { displayName });
+      const created = await createUserProfile(credential.user.uid, {
+        display_name: displayName,
+        university_email: email,
+      });
+      setProfile(created);
+    },
+    []
+  );
+
+  const login = useCallback(async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email, password);
+  }, []);
+
+  const logout = useCallback(async () => {
+    await firebaseSignOut(auth);
+  }, []);
+
+  return (
+    <AuthContext.Provider
+      value={{ firebaseUser, profile, initializing, refreshProfile, register, login, logout }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+  return ctx;
+}
