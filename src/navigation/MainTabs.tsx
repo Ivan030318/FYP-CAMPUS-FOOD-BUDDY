@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -14,6 +14,9 @@ import BlockedUsersScreen from '../screens/profile/BlockedUsersScreen';
 import UpdatesScreen from '../screens/updates/UpdatesScreen';
 import { colors } from '../theme/colors';
 import type { MatchCandidate } from '../services/matchService';
+import { useAuth } from '../context/AuthContext';
+import { subscribeToMyRequests } from '../services/requestService';
+import type { FoodBuddyRequest } from '../types';
 
 export type MatchesStackParamList = {
   MatchList: undefined;
@@ -107,6 +110,19 @@ const TAB_ICONS: Record<keyof MainTabParamList, string> = {
 };
 
 export default function MainTabs() {
+  const { firebaseUser } = useAuth();
+  const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    return subscribeToMyRequests(firebaseUser.uid, setRequests);
+  }, [firebaseUser]);
+
+  const pendingIncomingCount = useMemo(
+    () => requests.filter((request) => request.recipient_id === firebaseUser?.uid && request.status === 'pending').length,
+    [requests, firebaseUser]
+  );
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -123,7 +139,15 @@ export default function MainTabs() {
       <Tab.Screen name="MatchesTab" component={MatchesStack} options={{ title: 'Matches' }} />
       <Tab.Screen name="RequestsTab" component={RequestsScreen} options={{ title: 'Requests' }} />
       <Tab.Screen name="ChatsTab" component={ChatsStack} options={{ title: 'Chats' }} />
-      <Tab.Screen name="UpdatesTab" component={UpdatesScreen} options={{ title: 'Updates' }} />
+      <Tab.Screen
+        name="UpdatesTab"
+        component={UpdatesScreen}
+        options={{
+          title: 'Updates',
+          tabBarBadge: pendingIncomingCount || undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.primary, color: '#fff', fontSize: 10, minWidth: 17, height: 17 },
+        }}
+      />
       <Tab.Screen name="ProfileTab" component={ProfileStack} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );

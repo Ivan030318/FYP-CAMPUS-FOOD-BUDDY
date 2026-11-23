@@ -16,7 +16,8 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
 - **Food buddy requests** — one request per pair; only the recipient can accept/reject a
   pending request. Accepting atomically creates the pair's one chat.
 - **Real-time chat** — one chat per accepted match, backed by Firestore `onSnapshot` listeners.
-- **Updates** — a free in-app activity feed for buddy-request outcomes and chat activity.
+- **Updates** — a free in-app activity feed for buddy-request outcomes and chat activity, with a
+  live badge for pending incoming requests.
 - **Buddy history** — list of all accepted food buddy connections (not a claim that students
   actually dined together).
 - **Report / Block** — report a user or block/unblock them. A block hides the user from matching
