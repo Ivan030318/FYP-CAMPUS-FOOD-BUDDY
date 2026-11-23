@@ -1,0 +1,137 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../../context/AuthContext';
+import { subscribeToMyRequests } from '../../services/requestService';
+import { subscribeToMyChats } from '../../services/chatService';
+import { getUsersByIds } from '../../services/userService';
+import { Avatar } from '../../components/Avatar';
+import { colors } from '../../theme/colors';
+import type { Chat, FoodBuddyRequest, PublicUserProfile } from '../../types';
+
+type UpdateItem = {
+  id: string;
+  kind: 'request' | 'accepted' | 'rejected' | 'chat';
+  otherUserId: string;
+  timestamp: number;
+  detail: string;
+  chatId?: string;
+};
+
+function formatTime(timestamp: number): string {
+  const date = new Date(timestamp);
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+    ' · ' +
+    date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
+export default function UpdatesScreen() {
+  const navigation = useNavigation<any>();
+  const { firebaseUser } = useAuth();
+  const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [usersById, setUsersById] = useState<Record<string, PublicUserProfile>>({});
+  const [requestsLoaded, setRequestsLoaded] = useState(false);
+  const [chatsLoaded, setChatsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    return subscribeToMyRequests(firebaseUser.uid, (items) => {
+      setRequests(items);
+      setRequestsLoaded(true);
+    });
+  }, [firebaseUser]);
+
+  useEffect(() => {
+    if (!firebaseUser) return;
+    return subscribeToMyChats(firebaseUser.uid, (items) => {
+      setChats(items);
+      setChatsLoaded(true);
+    });
+  }, [firebaseUser]);
+
+  const updates = useMemo<UpdateItem[]>(() => {
+    if (!firebaseUser) return [];
+    const requestUpdates = requests.map((request) => {
+      const received = request.recipient_id === firebaseUser.uid;
+      const otherUserId = received ? request.requester_id : request.recipient_id;
+      const kind: UpdateItem['kind'] = request.status === 'pending'
+        ? 'request'
+        : request.status === 'accepted'
+          ? 'accepted'
+          : 'rejected';
+      const detail = request.status === 'pending'
+        ? received ? 'sent you a food buddy request' : 'Your food buddy request is pending'
+        : request.status === 'accepted'
+          ? received ? 'You accepted this food buddy request' : 'accepted your food buddy request'
+          : received ? 'You declined this food buddy request' : 'declined your food buddy request';
+      return { id: `request-${request.request_id}`, kind, otherUserId, timestamp: request.created_at, detail };
+    });
+    const chatUpdates = chats.map((chat) => {
+      const otherUserId = chat.user_ids.find((id) => id !== firebaseUser.uid) ?? firebaseUser.uid;
+      return {
+        id: `chat-${chat.chat_id}`,
+        kind: 'chat' as const,
+        otherUserId,
+        timestamp: chat.last_message_time,
+        detail: chat.last_message_preview,
+        chatId: chat.chat_id,
+      };
+    });
+    return [...requestUpdates, ...chatUpdates].sort((a, b) => b.timestamp - a.timestamp);
+  }, [requests, chats, firebaseUser]);
+
+  useEffect(() => {
+    const ids = Array.from(new Set(updates.map((item) => item.otherUserId)));
+    if (ids.length) getUsersByIds(ids).then(setUsersById);
+  }, [updates]);
+
+  if (!requestsLoaded || !chatsLoaded) {
+    return <View style={styles.centered}><ActivityIndicator color={colors.primary} /></View>;
+  }
+
+  return (
+    <FlatList
+      data={updates}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.list}
+      ListHeaderComponent={<View style={styles.intro}><Text style={styles.kicker}>STAY UPDATED</Text><Text style={styles.title}>Updates</Text><Text style={styles.helper}>Requests and chat activity in one place.</Text></View>}
+      ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyText}>No updates yet. Find a food buddy to get started!</Text></View>}
+      renderItem={({ item }) => {
+        const other = usersById[item.otherUserId];
+        if (!other) return null;
+        const icon = item.kind === 'request' ? '🤝' : item.kind === 'accepted' ? '🎉' : item.kind === 'rejected' ? '↩️' : '💬';
+        return (
+          <Pressable
+            style={styles.card}
+            onPress={() => item.chatId
+              ? navigation.navigate('ChatsTab', { screen: 'ChatRoom', params: { chatId: item.chatId, otherUserName: other.display_name } })
+              : navigation.navigate('RequestsTab')}
+          >
+            <Avatar name={other.display_name} uri={other.profile_photo_url} />
+            <View style={styles.body}>
+              <View style={styles.row}><Text style={styles.name}>{icon} {other.display_name}</Text><Text style={styles.time}>{formatTime(item.timestamp)}</Text></View>
+              <Text style={styles.detail} numberOfLines={2}>{item.detail}</Text>
+            </View>
+          </Pressable>
+        );
+      }}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  list: { padding: 20, flexGrow: 1, backgroundColor: colors.background },
+  intro: { paddingBottom: 20 },
+  kicker: { fontSize: 10, letterSpacing: 1.2, fontWeight: '800', color: colors.primary, marginBottom: 5 },
+  title: { fontSize: 28, fontWeight: '800', color: colors.navy },
+  helper: { fontSize: 13, color: colors.textMuted, marginTop: 5 },
+  emptyText: { color: colors.textMuted, textAlign: 'center' },
+  card: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: 20, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
+  body: { flex: 1, marginLeft: 12 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  name: { flex: 1, fontSize: 15, fontWeight: '800', color: colors.text },
+  time: { fontSize: 10, color: colors.textMuted },
+  detail: { fontSize: 13, lineHeight: 18, color: colors.textMuted, marginTop: 4 },
+});

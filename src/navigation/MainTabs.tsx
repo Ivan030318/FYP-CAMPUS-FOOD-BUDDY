@@ -11,6 +11,7 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import DiningHistoryScreen from '../screens/history/DiningHistoryScreen';
 import BlockedUsersScreen from '../screens/profile/BlockedUsersScreen';
+import UpdatesScreen from '../screens/updates/UpdatesScreen';
 import { colors } from '../theme/colors';
 import type { MatchCandidate } from '../services/matchService';
 
@@ -35,6 +36,7 @@ export type MainTabParamList = {
   MatchesTab: undefined;
   RequestsTab: undefined;
   ChatsTab: undefined;
+  UpdatesTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -100,6 +102,7 @@ const TAB_ICONS: Record<keyof MainTabParamList, string> = {
   MatchesTab: '🍽️',
   RequestsTab: '🤝',
   ChatsTab: '💬',
+  UpdatesTab: '🔔',
   ProfileTab: '👤',
 };
 
@@ -120,6 +123,7 @@ export default function MainTabs() {
       <Tab.Screen name="MatchesTab" component={MatchesStack} options={{ title: 'Matches' }} />
       <Tab.Screen name="RequestsTab" component={RequestsScreen} options={{ title: 'Requests' }} />
       <Tab.Screen name="ChatsTab" component={ChatsStack} options={{ title: 'Chats' }} />
+      <Tab.Screen name="UpdatesTab" component={UpdatesScreen} options={{ title: 'Updates' }} />
       <Tab.Screen name="ProfileTab" component={ProfileStack} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );
