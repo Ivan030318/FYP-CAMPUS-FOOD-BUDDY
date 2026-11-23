@@ -85,6 +85,15 @@ export function subscribeToMyRequests(
   });
 }
 
+export async function getMyRequests(uid: string): Promise<FoodBuddyRequest[]> {
+  const snapshot = await getDocs(
+    query(requestsCol, or(where('requester_id', '==', uid), where('recipient_id', '==', uid)))
+  );
+  return snapshot.docs.map(
+    (item) => ({ request_id: item.id, ...item.data() } as FoodBuddyRequest)
+  );
+}
+
 /**
  * Only the request recipient can accept/reject a pending request. An accepted request and its
  * deterministic chat are written atomically so duplicate chats cannot be created.

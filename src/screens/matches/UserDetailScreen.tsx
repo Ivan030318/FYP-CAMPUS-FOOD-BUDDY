@@ -25,6 +25,8 @@ export default function UserDetailScreen({ route, navigation }: Props) {
   const [reportReason, setReportReason] = useState('');
   const [showReport, setShowReport] = useState(false);
   const [requestError, setRequestError] = useState('');
+  const [blocking, setBlocking] = useState(false);
+  const [blockError, setBlockError] = useState('');
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -68,24 +70,19 @@ export default function UserDetailScreen({ route, navigation }: Props) {
     Alert.alert('Report submitted', 'Thank you, our admin team will review this report.');
   };
 
-  const handleBlock = () => {
+  const handleBlock = async () => {
     if (!firebaseUser) return;
-    Alert.alert(
-      'Block this user',
-      `You will no longer see ${candidateProfile.display_name} in your matches.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Block',
-          style: 'destructive',
-          onPress: async () => {
-            await blockUser(firebaseUser.uid, candidateProfile.user_id);
-            await refreshProfile();
-            navigation.goBack();
-          },
-        },
-      ]
-    );
+    setBlockError('');
+    setBlocking(true);
+    try {
+      await blockUser(firebaseUser.uid, candidateProfile.user_id);
+      await refreshProfile();
+      navigation.goBack();
+    } catch {
+      setBlockError('Could not block this user. Please try again.');
+    } finally {
+      setBlocking(false);
+    }
   };
 
   return (
@@ -93,7 +90,7 @@ export default function UserDetailScreen({ route, navigation }: Props) {
       <View style={styles.header}>
         <View style={styles.avatarRing}><Avatar name={candidateProfile.display_name} uri={candidateProfile.profile_photo_url} size={80} /></View>
         <Text style={styles.name}>{candidateProfile.display_name}</Text>
-        <View style={styles.scorePill}><Text style={styles.score}>{candidate.score} compatibility points</Text></View>
+        <View style={styles.scorePill}><Text style={styles.score}>{candidate.score}% compatibility</Text></View>
       </View>
 
       <View style={styles.section}>
@@ -119,6 +116,13 @@ export default function UserDetailScreen({ route, navigation }: Props) {
         <Text style={styles.value}>
           📍 {candidateProfile.dining_location} {sameDiningLocation ? '(same as you!)' : ''}
         </Text>
+      </View>
+
+      <View style={styles.explanationBox}>
+        <Text style={styles.explanationTitle}>Why you match</Text>
+        {sharedMealTimes.length ? <Text style={styles.explanationText}>✓ Shared meal time: {sharedMealTimes.join(', ')}</Text> : null}
+        {sharedFoodPreferences.length ? <Text style={styles.explanationText}>✓ Shared food: {sharedFoodPreferences.join(', ')}</Text> : null}
+        {sameDiningLocation ? <Text style={styles.explanationText}>✓ Same dining location</Text> : null}
       </View>
 
       <Button
@@ -160,7 +164,8 @@ export default function UserDetailScreen({ route, navigation }: Props) {
         </View>
       )}
 
-      <Button title="Block User" variant="danger" onPress={handleBlock} style={styles.button} />
+      <Button title="Block User" variant="danger" onPress={handleBlock} loading={blocking} style={styles.button} />
+      {blockError ? <Text style={styles.requestError}>{blockError}</Text> : null}
     </ScrollView>
   );
 }
@@ -173,6 +178,9 @@ const styles = StyleSheet.create({
   scorePill: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 11, paddingVertical: 7, marginTop: 10 },
   score: { fontSize: 12, color: colors.primaryDark, fontWeight: '800' },
   requestError: { color: colors.danger, backgroundColor: '#FFF1F0', borderRadius: 10, padding: 10, fontSize: 13, marginTop: 10 },
+  explanationBox: { backgroundColor: colors.secondarySoft, borderRadius: 16, padding: 14, marginBottom: 14 },
+  explanationTitle: { color: colors.secondary, fontSize: 13, fontWeight: '800', marginBottom: 7 },
+  explanationText: { color: colors.text, fontSize: 13, lineHeight: 20 },
   section: { backgroundColor: colors.card, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 14 },
   sectionTitle: { fontSize: 12, fontWeight: '800', color: colors.textMuted, marginBottom: 10 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap' },

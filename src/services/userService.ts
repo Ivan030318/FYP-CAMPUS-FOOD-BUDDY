@@ -6,12 +6,18 @@ import {
   updateDoc,
   writeBatch,
   arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore';
 import { firestore } from '../config/firebase';
 import type { PrivateUserData, PublicUserProfile, UserProfile } from '../types';
 
 const usersCol = collection(firestore, 'users');
 const privateUsersCol = collection(firestore, 'privateUsers');
+const blocksCol = collection(firestore, 'blocks');
+
+export function getBlockId(blockerUid: string, blockedUid: string): string {
+  return `${blockerUid}_${blockedUid}`;
+}
 
 export async function createUserProfile(
   uid: string,
@@ -93,7 +99,19 @@ export async function getUsersByIds(
 
 export async function blockUser(uid: string, blockedUid: string): Promise<void> {
   if (uid === blockedUid) throw new Error('You cannot block yourself.');
-  await updateDoc(doc(privateUsersCol, uid), {
-    blocked_users: arrayUnion(blockedUid),
+  const batch = writeBatch(firestore);
+  batch.update(doc(privateUsersCol, uid), { blocked_users: arrayUnion(blockedUid) });
+  batch.set(doc(blocksCol, getBlockId(uid, blockedUid)), {
+    blocker_id: uid,
+    blocked_id: blockedUid,
+    created_at: Date.now(),
   });
+  await batch.commit();
+}
+
+export async function unblockUser(uid: string, blockedUid: string): Promise<void> {
+  const batch = writeBatch(firestore);
+  batch.update(doc(privateUsersCol, uid), { blocked_users: arrayRemove(blockedUid) });
+  batch.delete(doc(blocksCol, getBlockId(uid, blockedUid)));
+  await batch.commit();
 }

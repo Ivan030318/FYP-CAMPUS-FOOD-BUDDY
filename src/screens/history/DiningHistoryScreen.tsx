@@ -62,15 +62,15 @@ export default function DiningHistoryScreen() {
       contentContainerStyle={styles.list}
       ListHeaderComponent={
         <View style={styles.intro}>
-          <Text style={styles.kicker}>MEMORIES MADE</Text>
-          <Text style={styles.title}>Dining history</Text>
+          <Text style={styles.kicker}>CONNECTIONS MADE</Text>
+          <Text style={styles.title}>Buddy history</Text>
           <Text style={styles.subtitle}>Your accepted food buddy connections, all in one place.</Text>
         </View>
       }
       ListEmptyComponent={
         <View style={styles.centered}>
           <Text style={styles.emptyText}>
-            No dining history yet. Matched meals will show up here once you accept a request.
+            No buddy history yet. Accepted food buddy connections will show up here.
           </Text>
         </View>
       }

@@ -2,6 +2,7 @@ import type { PublicUserProfile, UserProfile } from '../types';
 
 export interface MatchCandidate {
   profile: PublicUserProfile;
+  /** Explainable 0–100 compatibility score. */
   score: number;
   sharedFoodPreferences: string[];
   sharedMealTimes: string[];
@@ -9,9 +10,8 @@ export interface MatchCandidate {
 }
 
 /**
- * Simple rule-based matching (per FYP1 design: meal time, food preference, dining
- * location are the three matching factors). Weighted so shared meal time counts most,
- * since that is the hardest constraint to satisfy for an actual shared meal.
+ * Explainable rule-based matching. Meal time is weighted most heavily because it is the
+ * hardest constraint for arranging a shared meal; food preference and location follow.
  */
 export function scoreMatch(current: UserProfile, candidate: PublicUserProfile): MatchCandidate {
   const sharedFoodPreferences = candidate.food_preferences.filter((p) =>
@@ -24,15 +24,31 @@ export function scoreMatch(current: UserProfile, candidate: PublicUserProfile): 
     !!current.dining_location &&
     current.dining_location.trim().toLowerCase() === candidate.dining_location.trim().toLowerCase();
 
-  const score =
-    sharedMealTimes.length * 3 + sharedFoodPreferences.length * 2 + (sameDiningLocation ? 2 : 0);
+  const mealTimeScore = current.available_meal_times.length
+    ? (sharedMealTimes.length / current.available_meal_times.length) * 50
+    : 0;
+  const foodPreferenceScore = current.food_preferences.length
+    ? (sharedFoodPreferences.length / current.food_preferences.length) * 30
+    : 0;
+  const locationScore = sameDiningLocation ? 20 : 0;
+  const score = Math.round(Math.min(100, mealTimeScore + foodPreferenceScore + locationScore));
 
   return { profile: candidate, score, sharedFoodPreferences, sharedMealTimes, sameDiningLocation };
 }
 
-export function buildMatchList(current: UserProfile, others: PublicUserProfile[]): MatchCandidate[] {
+export function buildMatchList(
+  current: UserProfile,
+  others: PublicUserProfile[],
+  excludedUserIds: string[] = []
+): MatchCandidate[] {
   return others
-    .filter((u) => !current.blocked_users.includes(u.user_id))
+    .filter(
+      (user) =>
+        user.user_id !== current.user_id &&
+        !current.blocked_users.includes(user.user_id) &&
+        !excludedUserIds.includes(user.user_id)
+    )
     .map((u) => scoreMatch(current, u))
+    .filter((candidate) => candidate.score >= 25)
     .sort((a, b) => b.score - a.score);
 }

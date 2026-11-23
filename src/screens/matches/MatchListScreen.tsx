@@ -12,6 +12,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
 import { getAllOtherUsers } from '../../services/userService';
 import { buildMatchList, type MatchCandidate } from '../../services/matchService';
+import { getMyRequests } from '../../services/requestService';
 import { Avatar } from '../../components/Avatar';
 import { Tag } from '../../components/Tag';
 import { colors } from '../../theme/colors';
@@ -27,8 +28,16 @@ export default function MatchListScreen({ navigation }: Props) {
 
   const load = useCallback(async () => {
     if (!profile) return;
-    const others = await getAllOtherUsers(profile.user_id);
-    setMatches(buildMatchList(profile, others));
+    const [others, myRequests] = await Promise.all([
+      getAllOtherUsers(profile.user_id),
+      getMyRequests(profile.user_id),
+    ]);
+    const unavailableUserIds = myRequests
+      .filter((request) => request.status === 'pending' || request.status === 'accepted')
+      .map((request) =>
+        request.requester_id === profile.user_id ? request.recipient_id : request.requester_id
+      );
+    setMatches(buildMatchList(profile, others, unavailableUserIds));
   }, [profile]);
 
   useEffect(() => {
@@ -74,14 +83,14 @@ export default function MatchListScreen({ navigation }: Props) {
         <View style={styles.intro}>
           <Text style={styles.kicker}>DISCOVER</Text>
           <Text style={styles.pageTitle}>Your food circle</Text>
-          <Text style={styles.pageSubtitle}>Students with the best overlap in food, time and place.</Text>
+          <Text style={styles.pageSubtitle}>Compatible students based on time, food and location.</Text>
         </View>
       }
       ListEmptyComponent={
         <View style={styles.centered}>
           <Text style={styles.emptyTitle}>No match available</Text>
           <Text style={styles.emptySubtitle}>
-            No other students have registered yet. Check back later!
+            No suitable food buddies found. Try adding more food preferences, meal times or locations.
           </Text>
         </View>
       }
@@ -94,7 +103,7 @@ export default function MatchListScreen({ navigation }: Props) {
           <View style={styles.cardBody}>
             <View style={styles.nameRow}>
               <Text style={styles.name}>{item.profile.display_name}</Text>
-              <View style={styles.scoreBadge}><Text style={styles.scoreText}>{item.score} match points</Text></View>
+              <View style={styles.scoreBadge}><Text style={styles.scoreText}>{item.score}% match</Text></View>
             </View>
             <Text style={styles.location}>📍 {item.profile.dining_location || 'Not set'}</Text>
             <View style={styles.tagRow}>
@@ -104,6 +113,7 @@ export default function MatchListScreen({ navigation }: Props) {
               {item.sharedFoodPreferences.slice(0, 2).map((p) => (
                 <Tag key={p} label={p} />
               ))}
+              {item.sameDiningLocation ? <Tag label="Same dining spot" selected /> : null}
             </View>
           </View>
         </Pressable>

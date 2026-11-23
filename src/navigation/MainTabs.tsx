@@ -10,6 +10,7 @@ import ChatRoomScreen from '../screens/chat/ChatRoomScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import DiningHistoryScreen from '../screens/history/DiningHistoryScreen';
+import BlockedUsersScreen from '../screens/profile/BlockedUsersScreen';
 import { colors } from '../theme/colors';
 import type { MatchCandidate } from '../services/matchService';
 
@@ -27,6 +28,7 @@ export type ProfileStackParamList = {
   ProfileHome: undefined;
   EditProfile: undefined;
   DiningHistory: undefined;
+  BlockedUsers: undefined;
 };
 
 export type MainTabParamList = {
@@ -87,8 +89,9 @@ function ProfileStack() {
       <ProfileStackNav.Screen
         name="DiningHistory"
         component={DiningHistoryScreen}
-        options={{ title: 'Dining History' }}
+        options={{ title: 'Buddy History' }}
       />
+      <ProfileStackNav.Screen name="BlockedUsers" component={BlockedUsersScreen} options={{ title: 'Blocked Users' }} />
     </ProfileStackNav.Navigator>
   );
 }

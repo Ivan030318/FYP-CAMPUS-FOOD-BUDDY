@@ -69,9 +69,15 @@ export default function ProfileScreen({ navigation }: Props) {
         style={styles.button}
       />
       <Button
-        title="Dining History"
+        title="Buddy History"
         variant="outline"
         onPress={() => navigation.navigate('DiningHistory')}
+        style={styles.button}
+      />
+      <Button
+        title="Blocked Users"
+        variant="outline"
+        onPress={() => navigation.navigate('BlockedUsers')}
         style={styles.button}
       />
       <Button

@@ -23,6 +23,8 @@ export default function ChatRoomScreen({ route }: Props) {
   const { firebaseUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
   const listRef = useRef<FlatList<Message>>(null);
 
   useEffect(() => {
@@ -33,8 +35,16 @@ export default function ChatRoomScreen({ route }: Props) {
   const handleSend = async () => {
     const text = draft.trim();
     if (!text || !firebaseUser) return;
-    setDraft('');
-    await sendMessage(chatId, firebaseUser.uid, text);
+    setSendError('');
+    setSending(true);
+    try {
+      await sendMessage(chatId, firebaseUser.uid, text);
+      setDraft('');
+    } catch (error: any) {
+      setSendError(error?.message === 'Messages cannot be empty.' ? error.message : 'Message failed to send. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -57,11 +67,15 @@ export default function ChatRoomScreen({ route }: Props) {
                 <Text style={[styles.bubbleText, mine && styles.bubbleTextMine]}>
                   {item.text_content}
                 </Text>
+                <Text style={[styles.time, mine && styles.timeMine]}>
+                  {new Date(item.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
               </View>
             </View>
           );
         }}
       />
+      {sendError ? <Text style={styles.errorText}>{sendError}</Text> : null}
       <View style={styles.inputRow}>
         <TextInput
           value={draft}
@@ -70,11 +84,14 @@ export default function ChatRoomScreen({ route }: Props) {
           placeholderTextColor={colors.textMuted}
           style={styles.input}
           multiline
+          maxLength={1000}
+          editable={!sending}
         />
-        <Pressable onPress={handleSend} style={styles.sendButton}>
-          <Text style={styles.sendText}>Send</Text>
+        <Pressable onPress={handleSend} disabled={!draft.trim() || sending} style={[styles.sendButton, (!draft.trim() || sending) && styles.sendButtonDisabled]}>
+          <Text style={styles.sendText}>{sending ? 'Sending' : 'Send'}</Text>
         </Pressable>
       </View>
+      <Text style={styles.counter}>{draft.length}/1000</Text>
     </KeyboardAvoidingView>
   );
 }
@@ -102,6 +119,9 @@ const styles = StyleSheet.create({
   },
   bubbleText: { fontSize: 15, color: colors.text },
   bubbleTextMine: { color: '#fff' },
+  time: { color: colors.textMuted, fontSize: 10, marginTop: 4, alignSelf: 'flex-end' },
+  timeMine: { color: '#C8D5E3' },
+  errorText: { color: colors.danger, backgroundColor: '#FFF1F0', padding: 9, fontSize: 12, textAlign: 'center' },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -127,5 +147,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 12,
   },
+  sendButtonDisabled: { opacity: 0.55 },
   sendText: { color: '#fff', fontWeight: '600' },
+  counter: { backgroundColor: '#FFFFFF', textAlign: 'right', color: colors.textMuted, fontSize: 10, paddingRight: 16, paddingBottom: 8 },
 });

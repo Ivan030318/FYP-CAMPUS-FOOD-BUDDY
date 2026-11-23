@@ -10,14 +10,15 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
 - **Auth** — email/password registration & login (Firebase Authentication), session persists
   across app restarts.
 - **Profile** — set food preferences, available meal times and dining location; edit anytime.
-- **Matching** — rule-based match list scored on shared meal times (highest weight), shared
-  food preferences, and same dining location.
+- **Matching** — explainable compatibility score: shared meal times (50%), food preferences
+  (30%), and same dining location (20%). Pending/accepted connections and low matches are hidden.
 - **Food buddy requests** — one request per pair; only the recipient can accept/reject a
   pending request. Accepting atomically creates the pair's one chat.
 - **Real-time chat** — one chat per accepted match, backed by Firestore `onSnapshot` listeners.
-- **Dining history** — list of all accepted matches.
-- **Report / Block** — report a user (stored for admin review) or block them from your match
-  list.
+- **Buddy history** — list of all accepted food buddy connections (not a claim that students
+  actually dined together).
+- **Report / Block** — report a user or block/unblock them. A block hides the user from matching
+  and prevents new requests in either direction.
 
 Not yet built (see FYP1 Chapter 6 "Future Work" — beyond the core-features pass done here):
 push notifications (FCM), the admin web console for managing users/reports, and refinements
@@ -110,6 +111,7 @@ Matches the ERD/Data Dictionary in FYP1 Chapter 4, implemented as Firestore coll
 |---|---|
 | `users/{uid}` | **public** matching profile: display_name, photo, food_preferences[], available_meal_times[], dining_location |
 | `privateUsers/{uid}` | **owner-only** university_email and blocked_users[] |
+| `blocks/{blockerId}_{blockedId}` | private enforcement record used by Rules to prevent future requests in either direction |
 | `foodBuddyRequests/{id}` | requester_id, recipient_id, status (pending/accepted/rejected) |
 | `chats/{id}` | request_id, user_ids[], last_message_preview, last_message_time |
 | `chats/{id}/messages/{id}` | sender_id, text_content, sent_at (subcollection, not a top-level collection, so security rules can scope access to just the two chat members) |
