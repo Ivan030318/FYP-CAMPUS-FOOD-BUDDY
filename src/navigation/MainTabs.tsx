@@ -12,12 +12,10 @@ import ProfileScreen from '../screens/profile/ProfileScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import DiningHistoryScreen from '../screens/history/DiningHistoryScreen';
 import BlockedUsersScreen from '../screens/profile/BlockedUsersScreen';
-import SettingsScreen from '../screens/profile/SettingsScreen';
 import UpdatesScreen from '../screens/updates/UpdatesScreen';
 import { colors } from '../theme/colors';
 import type { MatchCandidate } from '../services/matchService';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { subscribeToMyRequests } from '../services/requestService';
 import { hasUnreadMessage, subscribeToMyChats } from '../services/chatService';
 import type { Chat, FoodBuddyRequest } from '../types';
@@ -37,7 +35,6 @@ export type ProfileStackParamList = {
   EditProfile: undefined;
   DiningHistory: undefined;
   BlockedUsers: undefined;
-  Settings: undefined;
 };
 
 export type MainTabParamList = {
@@ -53,20 +50,17 @@ const MatchesStackNav = createNativeStackNavigator<MatchesStackParamList>();
 const ChatsStackNav = createNativeStackNavigator<ChatsStackParamList>();
 const ProfileStackNav = createNativeStackNavigator<ProfileStackParamList>();
 
-function stackScreenOptions(isDark: boolean) {
-  return {
-  headerStyle: { backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF' },
+const stackScreenOptions = {
+  headerStyle: { backgroundColor: colors.card },
   headerTintColor: colors.primary,
-  headerTitleStyle: { color: isDark ? '#F2F2F7' : '#1C1C1E', fontSize: 17, fontWeight: '600' as const },
+  headerTitleStyle: { color: colors.text, fontSize: 17, fontWeight: '600' as const },
   headerShadowVisible: false,
-  contentStyle: { backgroundColor: isDark ? '#000000' : '#F2F2F7' },
-  };
-}
+  contentStyle: { backgroundColor: colors.background },
+};
 
 function MatchesStack() {
-  const { resolvedScheme } = useTheme();
   return (
-    <MatchesStackNav.Navigator screenOptions={stackScreenOptions(resolvedScheme === 'dark')}>
+    <MatchesStackNav.Navigator screenOptions={stackScreenOptions}>
       <MatchesStackNav.Screen
         name="MatchList"
         component={MatchListScreen}
@@ -82,9 +76,8 @@ function MatchesStack() {
 }
 
 function ChatsStack() {
-  const { resolvedScheme } = useTheme();
   return (
-    <ChatsStackNav.Navigator screenOptions={stackScreenOptions(resolvedScheme === 'dark')}>
+    <ChatsStackNav.Navigator screenOptions={stackScreenOptions}>
       <ChatsStackNav.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Chats' }} />
       <ChatsStackNav.Screen
         name="ChatRoom"
@@ -96,9 +89,8 @@ function ChatsStack() {
 }
 
 function ProfileStack() {
-  const { resolvedScheme } = useTheme();
   return (
-    <ProfileStackNav.Navigator screenOptions={stackScreenOptions(resolvedScheme === 'dark')}>
+    <ProfileStackNav.Navigator screenOptions={stackScreenOptions}>
       <ProfileStackNav.Screen
         name="ProfileHome"
         component={ProfileScreen}
@@ -115,7 +107,6 @@ function ProfileStack() {
         options={{ title: 'Buddy History' }}
       />
       <ProfileStackNav.Screen name="BlockedUsers" component={BlockedUsersScreen} options={{ title: 'Blocked Users' }} />
-      <ProfileStackNav.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
     </ProfileStackNav.Navigator>
   );
 }
@@ -130,8 +121,6 @@ const TAB_ICONS: Record<keyof MainTabParamList, string> = {
 
 export default function MainTabs() {
   const insets = useSafeAreaInsets();
-  const { resolvedScheme } = useTheme();
-  const isDark = resolvedScheme === 'dark';
   const { firebaseUser } = useAuth();
   const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
@@ -160,7 +149,7 @@ export default function MainTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: isDark ? '#A1A1A6' : '#6E6E73',
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarIcon: () => (
           <Text style={{ fontSize: 20 }}>{TAB_ICONS[route.name as keyof MainTabParamList]}</Text>
         ),
@@ -168,8 +157,8 @@ export default function MainTabs() {
           height: 56 + Math.max(insets.bottom, 8),
           paddingTop: 6,
           paddingBottom: Math.max(insets.bottom, 8),
-          borderTopColor: isDark ? '#38383A' : '#E5E5EA',
-          backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+          borderTopColor: colors.border,
+          backgroundColor: colors.card,
           elevation: 0,
         },
         tabBarHideOnKeyboard: true,
