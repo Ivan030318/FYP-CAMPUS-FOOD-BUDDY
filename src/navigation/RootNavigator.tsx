@@ -7,9 +7,10 @@ import MainTabs from './MainTabs';
 import AdminNavigator from './AdminNavigator';
 import { colors } from '../theme/colors';
 import { LoadError } from '../components/LoadError';
+import { AccountSuspended } from '../components/AccountSuspended';
 
 export default function RootNavigator() {
-  const { firebaseUser, initializing, isAdmin, profileError, retryProfile } = useAuth();
+  const { firebaseUser, initializing, isAdmin, accountSuspended, profileError, retryProfile } = useAuth();
 
   if (initializing) {
     return (
@@ -18,6 +19,8 @@ export default function RootNavigator() {
       </View>
     );
   }
+
+  if (firebaseUser && accountSuspended) return <AccountSuspended />;
 
   if (firebaseUser && profileError) {
     return <LoadError title="Could not load your profile" message={profileError} onRetry={retryProfile} />;

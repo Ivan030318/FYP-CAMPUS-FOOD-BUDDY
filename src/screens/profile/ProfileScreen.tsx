@@ -11,8 +11,9 @@ import type { ProfileStackParamList } from '../../navigation/MainTabs';
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileHome'>;
 
 export default function ProfileScreen({ navigation }: Props) {
-  const { profile, logout } = useAuth();
+  const { profile, logout, emailVerified, sendVerificationEmail, refreshEmailVerification } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [verificationLoading, setVerificationLoading] = useState(false);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -21,6 +22,29 @@ export default function ProfileScreen({ navigation }: Props) {
     } catch (err: any) {
       Alert.alert('Could not log out', err?.message ?? 'Please try again.');
       setLoggingOut(false);
+    }
+  };
+
+  const handleVerification = async () => {
+    setVerificationLoading(true);
+    try {
+      await sendVerificationEmail();
+      Alert.alert('Verification email sent', 'Open the email we sent, verify your address, then tap “I verified my email” here.');
+    } catch (err: any) {
+      Alert.alert('Could not send verification email', err?.message ?? 'Please try again shortly.');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const handleRefreshVerification = async () => {
+    setVerificationLoading(true);
+    try {
+      await refreshEmailVerification();
+    } catch (err: any) {
+      Alert.alert('Could not refresh verification', err?.message ?? 'Please try again.');
+    } finally {
+      setVerificationLoading(false);
     }
   };
 
@@ -33,6 +57,17 @@ export default function ProfileScreen({ navigation }: Props) {
         <Text style={styles.name}>{profile.display_name}</Text>
         <Text style={styles.email}>{profile.university_email}</Text>
       </View>
+
+      {!emailVerified ? (
+        <View style={styles.verificationCard}>
+          <Text style={styles.verificationTitle}>Verify your email</Text>
+          <Text style={styles.verificationText}>We sent a confirmation link to your university email. Verification helps keep Campus Food Buddy safe.</Text>
+          <Button title="Resend Verification Email" variant="outline" onPress={handleVerification} loading={verificationLoading} style={styles.verificationButton} />
+          <Button title="I Verified My Email" onPress={handleRefreshVerification} loading={verificationLoading} style={styles.verificationButton} />
+        </View>
+      ) : (
+        <View style={styles.verifiedCard}><Text style={styles.verifiedText}>✓ University email verified</Text></View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>YOUR DINING PROFILE</Text>
@@ -97,6 +132,12 @@ const styles = StyleSheet.create({
   avatarRing: { backgroundColor: colors.primarySoft, padding: 4, borderRadius: 44 },
   name: { fontSize: 24, fontWeight: '700', color: colors.text, marginTop: 12 },
   email: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
+  verificationCard: { backgroundColor: '#FFF8E8', borderWidth: 1, borderColor: '#F3DDA5', borderRadius: 16, padding: 16, marginBottom: 12 },
+  verificationTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  verificationText: { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 5 },
+  verificationButton: { marginTop: 10, paddingVertical: 10 },
+  verifiedCard: { backgroundColor: '#EEF9F0', borderWidth: 1, borderColor: '#BFE5C7', borderRadius: 14, padding: 13, marginBottom: 12 },
+  verifiedText: { color: colors.success, fontSize: 13, fontWeight: '700' },
   section: { backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 12 },
   sectionTitle: { fontSize: 11, letterSpacing: 0.7, fontWeight: '700', color: colors.textMuted, marginBottom: 14 },
   sectionHeading: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 10 },

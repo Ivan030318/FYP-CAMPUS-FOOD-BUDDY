@@ -2,11 +2,13 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AdminHomeScreen from '../screens/admin/AdminHomeScreen';
 import AdminReportsScreen from '../screens/admin/AdminReportsScreen';
+import AdminAccountsScreen from '../screens/admin/AdminAccountsScreen';
 import { colors } from '../theme/colors';
 
 export type AdminStackParamList = {
   AdminHome: undefined;
   AdminReports: undefined;
+  AdminAccounts: undefined;
 };
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();
@@ -24,6 +26,7 @@ export default function AdminNavigator() {
     >
       <Stack.Screen name="AdminHome" component={AdminHomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AdminReports" component={AdminReportsScreen} options={{ title: 'Reports' }} />
+      <Stack.Screen name="AdminAccounts" component={AdminAccountsScreen} options={{ title: 'Account Safety' }} />
     </Stack.Navigator>
   );
 }

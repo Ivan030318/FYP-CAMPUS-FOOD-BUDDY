@@ -8,7 +8,8 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
 ## Features implemented
 
 - **Auth** — email/password registration & login (Firebase Authentication), session persists
-  across app restarts; users can request a Firebase password-reset email from the login page.
+  across app restarts; new users receive an email-verification link and can resend or refresh
+  their verification status from Profile. Users can also request a password-reset email from login.
 - **Profile** — set food preferences, available meal times and dining location; edit anytime.
   Profiles use a consistent name-initial avatar, so the app stays within Firebase's free plan.
 - **Accessibility** — reusable buttons, tags and avatars expose descriptive labels for screen readers.
@@ -25,11 +26,11 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
   actually dined together).
 - **Report / Block** — report a user once per pair or block/unblock them. A block hides the user
   from matching and prevents new requests in either direction.
-- **Admin report review** — a role-protected dashboard lets an assigned admin review reports and
-  mark them resolved with an audit timestamp and administrator UID.
+- **Admin safety console** — a role-protected dashboard shows pending, resolved, and suspended-account
+  counts. An assigned admin can resolve reports, suspend a reported account, and later restore it.
 
 Not yet built (see FYP1 Chapter 6 "Future Work" — beyond the core-features pass done here):
-push notifications (FCM), the admin web console for managing users/reports, and refinements
+push notifications (FCM), richer admin analytics/search, and refinements
 from usability testing (SUS).
 
 ## Project structure
@@ -110,6 +111,14 @@ After publishing the updated [`firestore.rules`](firestore.rules), assign the ad
 Only a Firebase Console administrator can create this document; the app's own Firestore Rules do
 not permit any user to assign themselves a role.
 
+### Admin account safety
+
+The Admin Console's **Reports** screen includes **Suspend Account** for a reported student. A
+suspended student sees a clear account-review screen and cannot use matching, requests, blocks,
+or chats. Use **Account Safety** in the Admin Console to restore access when the review is complete.
+These controls rely on the latest `accountSuspensions` rules in [`firestore.rules`](firestore.rules),
+so publish that file before testing them.
+
 ## 3. Install & run
 
 ```bash
@@ -146,6 +155,7 @@ Matches the ERD/Data Dictionary in FYP1 Chapter 4, implemented as Firestore coll
 | `chats/{id}` | request_id, user_ids[], last_message_preview, last_message_time |
 | `chats/{id}/messages/{id}` | sender_id, text_content, sent_at (subcollection, not a top-level collection, so security rules can scope access to just the two chat members) |
 | `reports/{id}` | reporter_id, reported_user_id, reason, status |
+| `accountSuspensions/{uid}` | admin-managed moderation record: user_id, reason, suspended_at, suspended_by |
 
 ## Known limitations (matches FYP1 Chapter 6 scope)
 

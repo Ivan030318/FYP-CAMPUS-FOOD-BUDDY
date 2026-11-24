@@ -79,3 +79,10 @@ export interface Report {
   resolved_at?: number;
   resolved_by?: string;
 }
+
+export interface AccountSuspension {
+  user_id: string;
+  reason: string;
+  suspended_at: number;
+  suspended_by: string;
+}

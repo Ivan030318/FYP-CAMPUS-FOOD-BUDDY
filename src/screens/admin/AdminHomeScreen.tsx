@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
 import { subscribeToReports } from '../../services/reportService';
+import { subscribeToSuspensions } from '../../services/suspensionService';
 import { Button } from '../../components/Button';
 import { LoadError } from '../../components/LoadError';
 import { colors } from '../../theme/colors';
@@ -14,6 +15,7 @@ type Props = NativeStackScreenProps<AdminStackParamList, 'AdminHome'>;
 export default function AdminHomeScreen({ navigation }: Props) {
   const { logout } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
+  const [suspensionCount, setSuspensionCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -33,6 +35,11 @@ export default function AdminHomeScreen({ navigation }: Props) {
       }
     );
   }, [retryKey]);
+
+  useEffect(() => subscribeToSuspensions(
+    (items) => setSuspensionCount(items.length),
+    () => setLoadError(true)
+  ), [retryKey]);
 
   const pendingCount = useMemo(() => reports.filter((report) => report.status === 'pending').length, [reports]);
   const resolvedCount = reports.length - pendingCount;
@@ -67,6 +74,10 @@ export default function AdminHomeScreen({ navigation }: Props) {
           <Text style={styles.statLabel}>Resolved</Text>
         </View>
       </View>
+      <View style={[styles.statCard, styles.suspendedCard]}>
+        <Text style={styles.statNumber}>{suspensionCount}</Text>
+        <Text style={styles.statLabel}>Suspended accounts</Text>
+      </View>
 
       <Pressable style={styles.moduleCard} onPress={() => navigation.navigate('AdminReports')}>
         <View style={styles.moduleIcon}><Text style={styles.moduleEmoji}>🛡️</Text></View>
@@ -77,7 +88,17 @@ export default function AdminHomeScreen({ navigation }: Props) {
         <Text style={styles.chevron}>›</Text>
       </Pressable>
 
+      <Pressable style={styles.moduleCard} onPress={() => navigation.navigate('AdminAccounts')}>
+        <View style={[styles.moduleIcon, styles.safetyIcon]}><Text style={styles.moduleEmoji}>👤</Text></View>
+        <View style={styles.moduleText}>
+          <Text style={styles.moduleTitle}>Account safety</Text>
+          <Text style={styles.moduleSubtitle}>Restore accounts after a moderation decision.</Text>
+        </View>
+        <Text style={styles.chevron}>›</Text>
+      </Pressable>
+
       <Button title="Review Reports" onPress={() => navigation.navigate('AdminReports')} />
+      <Button title="Manage Suspended Accounts" variant="outline" onPress={() => navigation.navigate('AdminAccounts')} style={styles.manageButton} />
       <Button title="Log Out" variant="outline" onPress={handleLogout} loading={loggingOut} style={styles.logoutButton} />
     </View>
   );
@@ -93,14 +114,17 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   statCard: { flex: 1, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 16, padding: 18 },
   pendingCard: { backgroundColor: colors.primarySoft, borderColor: '#C8E1FF' },
+  suspendedCard: { marginBottom: 16, backgroundColor: '#FFF8E8', borderColor: '#F3DDA5' },
   statNumber: { color: colors.text, fontSize: 28, fontWeight: '700' },
   statLabel: { color: colors.textMuted, fontSize: 13, marginTop: 4, fontWeight: '600' },
   moduleCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 16, marginBottom: 16 },
   moduleIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primarySoft },
   moduleEmoji: { fontSize: 21 },
+  safetyIcon: { backgroundColor: '#FFF8E8' },
   moduleText: { flex: 1, marginLeft: 12 },
   moduleTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
   moduleSubtitle: { color: colors.textMuted, fontSize: 13, lineHeight: 18, marginTop: 3 },
   chevron: { color: colors.textMuted, fontSize: 28, fontWeight: '300' },
   logoutButton: { marginTop: 12 },
+  manageButton: { marginTop: 12 },
 });

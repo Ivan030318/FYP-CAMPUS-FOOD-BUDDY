@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { resolveReport, subscribeToReports } from '../../services/reportService';
+import { suspendAccount } from '../../services/suspensionService';
 import { getUsersByIds } from '../../services/userService';
 import { Button } from '../../components/Button';
 import { LoadError } from '../../components/LoadError';
@@ -21,6 +22,7 @@ export default function AdminReportsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [suspendingId, setSuspendingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'pending' | 'resolved' | 'all'>('pending');
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -67,6 +69,37 @@ export default function AdminReportsScreen() {
     }
   };
 
+  const confirmSuspend = (report: Report, studentName: string) => {
+    if (!firebaseUser) return;
+    Alert.alert(
+      `Suspend ${studentName}?`,
+      'The student will no longer be able to use matching, requests, or chats until an admin restores the account.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Suspend Account', style: 'destructive',
+          onPress: () => { void handleSuspend(report); },
+        },
+      ]
+    );
+  };
+
+  const handleSuspend = async (report: Report) => {
+    if (!firebaseUser) return;
+    setSuspendingId(report.report_id);
+    setError('');
+    try {
+      await suspendAccount(firebaseUser.uid, report.reported_user_id, `Report: ${report.reason}`);
+      await resolveReport(report.report_id, firebaseUser.uid);
+    } catch (err: any) {
+      const message = err?.message ?? 'Could not suspend this account.';
+      setError(message);
+      Alert.alert('Could not suspend account', message);
+    } finally {
+      setSuspendingId(null);
+    }
+  };
+
   if (!firebaseUser) return null;
   if (loading) return <View style={styles.centered}><ActivityIndicator color={colors.primary} /></View>;
   if (loadError) return <LoadError title="Could not load reports" onRetry={() => setRetryKey((key) => key + 1)} />;
@@ -109,7 +142,10 @@ export default function AdminReportsScreen() {
             <Text style={styles.label}>Submitted by</Text><Text style={styles.value}>{reporter}</Text>
             <Text style={styles.label}>Reason</Text><Text style={styles.reason}>{item.reason}</Text>
             {!pending && item.resolved_at ? <Text style={styles.resolvedNote}>Resolved {formatDate(item.resolved_at)}</Text> : null}
-            {pending ? <Button title="Mark as Resolved" onPress={() => handleResolve(item.report_id)} loading={resolvingId === item.report_id} style={styles.button} /> : null}
+            {pending ? <>
+              <Button title="Suspend Account" variant="danger" onPress={() => confirmSuspend(item, reported)} loading={suspendingId === item.report_id} style={styles.button} />
+              <Button title="Mark as Resolved" variant="outline" onPress={() => handleResolve(item.report_id)} loading={resolvingId === item.report_id} style={styles.secondaryButton} />
+            </> : null}
           </View>
         );
       }}
@@ -141,4 +177,5 @@ const styles = StyleSheet.create({
   reason: { fontSize: 14, color: colors.text, lineHeight: 20, marginTop: 4 },
   resolvedNote: { fontSize: 12, color: colors.success, fontWeight: '600', marginTop: 14 },
   button: { marginTop: 16, paddingVertical: 11 },
+  secondaryButton: { marginTop: 8, paddingVertical: 11 },
 });

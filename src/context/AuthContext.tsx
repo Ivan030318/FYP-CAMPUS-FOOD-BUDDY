@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
   onAuthStateChanged,
   updateProfile,
   type User,
@@ -11,6 +12,7 @@ import {
 import { auth } from '../config/firebase';
 import { createUserProfile, getUserProfile } from '../services/userService';
 import { isAdmin as checkIsAdmin } from '../services/reportService';
+import { getMySuspension } from '../services/suspensionService';
 import type { UserProfile } from '../types';
 
 interface AuthContextValue {
@@ -18,12 +20,16 @@ interface AuthContextValue {
   profile: UserProfile | null;
   initializing: boolean;
   isAdmin: boolean;
+  accountSuspended: boolean;
+  emailVerified: boolean;
   profileError: string | null;
   refreshProfile: () => Promise<void>;
   retryProfile: () => Promise<void>;
   register: (email: string, password: string, displayName: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
+  refreshEmailVerification: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -34,6 +40,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [initializing, setInitializing] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [accountSuspended, setAccountSuspended] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
   const loadProfile = useCallback(async (uid: string) => {
@@ -60,11 +68,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setFirebaseUser(user);
       try {
         if (user) {
-          await loadProfile(user.uid);
+          setEmailVerified(user.emailVerified);
+          const suspension = await getMySuspension(user.uid);
+          setAccountSuspended(Boolean(suspension));
+          if (suspension) {
+            setProfile(null);
+            setProfileError(null);
+            setIsAdmin(false);
+          } else {
+            await loadProfile(user.uid);
+          }
         } else {
           setProfile(null);
           setIsAdmin(false);
           setProfileError(null);
+          setAccountSuspended(false);
+          setEmailVerified(false);
         }
       } finally {
         setInitializing(false);
@@ -86,12 +105,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const normalizedEmail = email.trim().toLowerCase();
       const credential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
       await updateProfile(credential.user, { displayName });
+      await sendEmailVerification(credential.user);
       const created = await createUserProfile(credential.user.uid, {
         display_name: displayName,
         university_email: normalizedEmail,
       });
       setProfile(created);
       setIsAdmin(false);
+      setAccountSuspended(false);
+      setEmailVerified(false);
     },
     []
   );
@@ -104,13 +126,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await sendPasswordResetEmail(auth, email.trim().toLowerCase());
   }, []);
 
+  const sendVerificationEmail = useCallback(async () => {
+    if (!firebaseUser) throw new Error('Please log in again before requesting a verification email.');
+    await sendEmailVerification(firebaseUser);
+  }, [firebaseUser]);
+
+  const refreshEmailVerification = useCallback(async () => {
+    if (!firebaseUser) return;
+    await firebaseUser.reload();
+    setEmailVerified(auth.currentUser?.emailVerified ?? false);
+  }, [firebaseUser]);
+
   const logout = useCallback(async () => {
     await firebaseSignOut(auth);
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ firebaseUser, profile, initializing, isAdmin, profileError, refreshProfile, retryProfile, register, login, resetPassword, logout }}
+      value={{ firebaseUser, profile, initializing, isAdmin, accountSuspended, emailVerified, profileError, refreshProfile, retryProfile, register, login, resetPassword, sendVerificationEmail, refreshEmailVerification, logout }}
     >
       {children}
     </AuthContext.Provider>

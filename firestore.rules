@@ -9,6 +9,10 @@ service cloud.firestore {
       return isSignedIn()
         && exists(/databases/$(database)/documents/adminUsers/$(request.auth.uid));
     }
+    function isActiveUser() {
+      return isSignedIn()
+        && !exists(/databases/$(database)/documents/accountSuspensions/$(request.auth.uid));
+    }
     function isValidPublicProfile(data, uid) {
       return data.user_id == uid
         && data.display_name is string
@@ -30,14 +34,14 @@ service cloud.firestore {
 
     // Public matching data only. Email and blocked users live in privateUsers/{uid}.
     match /users/{uid} {
-      allow read: if isSignedIn();
-      allow create: if isSelf(uid)
+      allow read: if isSignedIn() && (isActiveUser() || isAdmin());
+      allow create: if isSelf(uid) && isActiveUser()
         && request.resource.data.keys().hasOnly([
           'user_id', 'display_name', 'profile_photo_url', 'food_preferences',
           'available_meal_times', 'dining_location', 'created_at'
         ])
         && isValidPublicProfile(request.resource.data, uid);
-      allow update: if isSelf(uid)
+      allow update: if isSelf(uid) && isActiveUser()
         && request.resource.data.keys().hasOnly([
           'user_id', 'display_name', 'profile_photo_url', 'food_preferences',
           'available_meal_times', 'dining_location', 'created_at'
@@ -50,18 +54,18 @@ service cloud.firestore {
 
     // Never readable by another user; keeps email and block list out of match queries.
     match /privateUsers/{uid} {
-      allow read: if isSelf(uid);
-      allow create, update: if isSelf(uid)
+      allow read: if isSelf(uid) && isActiveUser();
+      allow create, update: if isSelf(uid) && isActiveUser()
         && request.resource.data.keys().hasOnly(['university_email', 'blocked_users']);
       allow delete: if false;
     }
 
     match /foodBuddyRequests/{requestId} {
-      allow read: if isSignedIn()
-        && (resource.data.requester_id == request.auth.uid || resource.data.recipient_id == request.auth.uid);
+      allow read: if isAdmin() || (isActiveUser()
+        && (resource.data.requester_id == request.auth.uid || resource.data.recipient_id == request.auth.uid));
 
       // The deterministic pair id is supplied by the client; each document can only be created once.
-      allow create: if isSignedIn()
+      allow create: if isActiveUser()
         && request.resource.data.keys().hasOnly([
           'participant_ids', 'requester_id', 'recipient_id', 'status', 'created_at'
         ])
@@ -79,7 +83,7 @@ service cloud.firestore {
         && request.resource.data.created_at is number;
 
       // Only the recipient may make the one-way pending -> accepted/rejected decision.
-      allow update: if isSignedIn()
+      allow update: if isActiveUser()
         && resource.data.recipient_id == request.auth.uid
         && resource.data.status == 'pending'
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'responded_at'])
@@ -91,20 +95,20 @@ service cloud.firestore {
     // Block records are never readable from the client. Rules use exists() above to reject
     // requests in either direction when either student has blocked the other.
     match /blocks/{blockId} {
-      allow create: if isSignedIn()
+      allow create: if isActiveUser()
         && request.resource.data.keys().hasOnly(['blocker_id', 'blocked_id', 'created_at'])
         && request.resource.data.blocker_id == request.auth.uid
         && request.resource.data.blocker_id != request.resource.data.blocked_id
         && blockId == request.resource.data.blocker_id + '_' + request.resource.data.blocked_id;
-      allow delete: if isSignedIn() && resource.data.blocker_id == request.auth.uid;
+      allow delete: if isActiveUser() && resource.data.blocker_id == request.auth.uid;
       allow read, update: if false;
     }
 
     match /chats/{chatId} {
-      allow read: if isChatMember(resource);
+      allow read: if isActiveUser() && isChatMember(resource);
 
       // Chat ID must equal request ID and is only created in the recipient's accept transaction.
-      allow create: if isSignedIn()
+      allow create: if isActiveUser()
         && chatId == request.resource.data.request_id
         && request.resource.data.keys().hasOnly([
           'request_id', 'user_ids', 'last_message_preview', 'last_message_time',
@@ -121,15 +125,15 @@ service cloud.firestore {
         && request.resource.data.last_read_at is map;
 
       // Participants and request linkage can never be changed after creation.
-      allow update: if isChatMember(resource)
+      allow update: if isActiveUser() && isChatMember(resource)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'last_message_preview', 'last_message_time', 'last_message_sender_id', 'last_read_at'
         ]);
       allow delete: if false;
 
       match /messages/{messageId} {
-        allow read: if isChatMember(get(/databases/$(database)/documents/chats/$(chatId)));
-        allow create: if isChatMember(get(/databases/$(database)/documents/chats/$(chatId)))
+        allow read: if isActiveUser() && isChatMember(get(/databases/$(database)/documents/chats/$(chatId)));
+        allow create: if isActiveUser() && isChatMember(get(/databases/$(database)/documents/chats/$(chatId)))
           && request.resource.data.keys().hasOnly(['chat_id', 'sender_id', 'text_content', 'sent_at'])
           && request.resource.data.chat_id == chatId
           && request.resource.data.sender_id == request.auth.uid
@@ -146,8 +150,24 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // Only an administrator can suspend or restore an account. A suspended student may
+    // still read their own status so the app can show a clear explanation rather than an error.
+    match /accountSuspensions/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow create, update: if isAdmin()
+        && uid != request.auth.uid
+        && request.resource.data.keys().hasOnly(['user_id', 'reason', 'suspended_at', 'suspended_by'])
+        && request.resource.data.user_id == uid
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0
+        && request.resource.data.reason.size() <= 1000
+        && request.resource.data.suspended_at is number
+        && request.resource.data.suspended_by == request.auth.uid;
+      allow delete: if isAdmin() && uid != request.auth.uid;
+    }
+
     match /reports/{reportId} {
-      allow create: if isSignedIn()
+      allow create: if isActiveUser()
         && request.resource.data.keys().hasOnly([
           'reporter_id', 'reported_user_id', 'reason', 'status', 'submitted_at'
         ])
