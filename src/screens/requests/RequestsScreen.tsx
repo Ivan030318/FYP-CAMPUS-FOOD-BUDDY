@@ -119,12 +119,12 @@ export default function RequestsScreen() {
         renderItem={({ item }) => {
           const otherId = tab === 'incoming' ? item.requester_id : item.recipient_id;
           const other = usersById[otherId];
-          if (!other) return null;
+          const otherName = other?.display_name ?? 'Student';
           return (
             <View style={styles.card}>
-              <Avatar name={other.display_name} uri={other.profile_photo_url} />
+              <Avatar name={otherName} uri={other?.profile_photo_url} />
               <View style={styles.cardBody}>
-                <Text style={styles.name}>{other.display_name}</Text>
+                <Text style={styles.name}>{otherName}</Text>
                 <Text style={styles.status}>
                   {tab === 'incoming' ? 'wants to be your food buddy' : `Status: ${item.status}`}
                 </Text>

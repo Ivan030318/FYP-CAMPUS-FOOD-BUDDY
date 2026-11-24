@@ -91,12 +91,12 @@ export default function DiningHistoryScreen() {
       renderItem={({ item }) => {
         const otherId = item.requester_id === firebaseUser?.uid ? item.recipient_id : item.requester_id;
         const other = usersById[otherId];
-        if (!other) return null;
+        const otherName = other?.display_name ?? 'Student';
         return (
           <View style={styles.card}>
-            <Avatar name={other.display_name} uri={other.profile_photo_url} size={40} />
+            <Avatar name={otherName} uri={other?.profile_photo_url} size={40} />
             <View style={styles.cardBody}>
-              <Text style={styles.name}>Matched with {other.display_name}</Text>
+              <Text style={styles.name}>Matched with {otherName}</Text>
               <Text style={styles.date}>{formatDate(item.responded_at ?? item.created_at)}</Text>
             </View>
             <View style={styles.doneBadge}><Text style={styles.doneText}>Connected</Text></View>

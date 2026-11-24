@@ -88,12 +88,14 @@ export async function getUsersByIds(
   uids: string[]
 ): Promise<Record<string, PublicUserProfile>> {
   const result: Record<string, PublicUserProfile> = {};
-  await Promise.all(
-    uids.map(async (uid) => {
-      const profile = await getPublicUserProfile(uid);
-      if (profile) result[uid] = profile;
-    })
+  const fetched = await Promise.allSettled(
+    uids.map(async (uid) => ({ uid, profile: await getPublicUserProfile(uid) }))
   );
+  fetched.forEach((item) => {
+    if (item.status === 'fulfilled' && item.value.profile) {
+      result[item.value.uid] = item.value.profile;
+    }
+  });
   return result;
 }
 

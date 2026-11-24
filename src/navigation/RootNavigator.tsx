@@ -5,9 +5,10 @@ import { useAuth } from '../context/AuthContext';
 import AuthStack from './AuthStack';
 import MainTabs from './MainTabs';
 import { colors } from '../theme/colors';
+import { LoadError } from '../components/LoadError';
 
 export default function RootNavigator() {
-  const { firebaseUser, initializing } = useAuth();
+  const { firebaseUser, initializing, profileError, retryProfile } = useAuth();
 
   if (initializing) {
     return (
@@ -15,6 +16,10 @@ export default function RootNavigator() {
         <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
+  }
+
+  if (firebaseUser && profileError) {
+    return <LoadError title="Could not load your profile" message={profileError} onRetry={retryProfile} />;
   }
 
   return (

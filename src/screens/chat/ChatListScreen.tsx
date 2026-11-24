@@ -84,7 +84,7 @@ export default function ChatListScreen({ navigation }: Props) {
       renderItem={({ item }) => {
         const otherId = item.user_ids.find((id) => id !== firebaseUser?.uid);
         const other = otherId ? usersById[otherId] : undefined;
-        if (!other) return null;
+        const otherName = other?.display_name ?? 'Student';
         const unread = firebaseUser ? hasUnreadMessage(item, firebaseUser.uid) : false;
         return (
           <Pressable
@@ -92,14 +92,14 @@ export default function ChatListScreen({ navigation }: Props) {
             onPress={() =>
               navigation.navigate('ChatRoom', {
                 chatId: item.chat_id,
-                otherUserName: other.display_name,
+                otherUserName: otherName,
               })
             }
           >
-            <Avatar name={other.display_name} uri={other.profile_photo_url} />
+            <Avatar name={otherName} uri={other?.profile_photo_url} />
             <View style={styles.cardBody}>
               <View style={styles.rowBetween}>
-                <Text style={[styles.name, unread && styles.nameUnread]}>{other.display_name}</Text>
+                <Text style={[styles.name, unread && styles.nameUnread]}>{otherName}</Text>
                 <Text style={styles.time}>{formatTime(item.last_message_time)}</Text>
               </View>
               <Text style={[styles.preview, unread && styles.previewUnread]} numberOfLines={1}>

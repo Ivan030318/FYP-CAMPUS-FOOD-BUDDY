@@ -16,7 +16,9 @@ interface AuthContextValue {
   firebaseUser: User | null;
   profile: UserProfile | null;
   initializing: boolean;
+  profileError: string | null;
   refreshProfile: () => Promise<void>;
+  retryProfile: () => Promise<void>;
   register: (email: string, password: string, displayName: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -29,26 +31,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   const loadProfile = useCallback(async (uid: string) => {
-    const p = await getUserProfile(uid);
-    setProfile(p);
+    try {
+      setProfileError(null);
+      const p = await getUserProfile(uid);
+      if (!p) throw new Error('Your account profile could not be found.');
+      setProfile(p);
+    } catch {
+      setProfile(null);
+      setProfileError('Could not load your profile. Check your connection and try again.');
+    }
   }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
-      if (user) {
-        await loadProfile(user.uid);
-      } else {
-        setProfile(null);
+      try {
+        if (user) {
+          await loadProfile(user.uid);
+        } else {
+          setProfile(null);
+          setProfileError(null);
+        }
+      } finally {
+        setInitializing(false);
       }
-      setInitializing(false);
     });
     return unsubscribe;
   }, [loadProfile]);
 
   const refreshProfile = useCallback(async () => {
+    if (firebaseUser) await loadProfile(firebaseUser.uid);
+  }, [firebaseUser, loadProfile]);
+
+  const retryProfile = useCallback(async () => {
     if (firebaseUser) await loadProfile(firebaseUser.uid);
   }, [firebaseUser, loadProfile]);
 
@@ -79,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ firebaseUser, profile, initializing, refreshProfile, register, login, resetPassword, logout }}
+      value={{ firebaseUser, profile, initializing, profileError, refreshProfile, retryProfile, register, login, resetPassword, logout }}
     >
       {children}
     </AuthContext.Provider>

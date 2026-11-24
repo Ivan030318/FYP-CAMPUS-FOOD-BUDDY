@@ -22,6 +22,8 @@ export default function UserDetailScreen({ route, navigation }: Props) {
   const [sending, setSending] = useState(false);
   const [existingRequest, setExistingRequest] = useState<FoodBuddyRequest | null>(null);
   const [loadingRequest, setLoadingRequest] = useState(true);
+  const [requestLoadError, setRequestLoadError] = useState('');
+  const [requestRetryKey, setRequestRetryKey] = useState(0);
   const [reportReason, setReportReason] = useState('');
   const [showReport, setShowReport] = useState(false);
   const [reportSubmitting, setReportSubmitting] = useState(false);
@@ -33,10 +35,13 @@ export default function UserDetailScreen({ route, navigation }: Props) {
   useEffect(() => {
     if (!firebaseUser) return;
     setRequestError('');
+    setRequestLoadError('');
+    setLoadingRequest(true);
     getBuddyRequest(firebaseUser.uid, candidateProfile.user_id)
       .then(setExistingRequest)
+      .catch(() => setRequestLoadError('Could not check the request status. Please try again before sending a request.'))
       .finally(() => setLoadingRequest(false));
-  }, [candidateProfile.user_id, firebaseUser]);
+  }, [candidateProfile.user_id, firebaseUser, requestRetryKey]);
 
   const handleSendRequest = async () => {
     if (!firebaseUser) return;
@@ -149,8 +154,14 @@ export default function UserDetailScreen({ route, navigation }: Props) {
         }
         onPress={handleSendRequest}
         loading={sending || loadingRequest}
-        disabled={!!existingRequest || loadingRequest}
+        disabled={!!existingRequest || loadingRequest || !!requestLoadError}
       />
+      {requestLoadError ? (
+        <View style={styles.requestCheckError}>
+          <Text style={styles.requestError}>{requestLoadError}</Text>
+          <Button title="Try Again" variant="outline" onPress={() => setRequestRetryKey((key) => key + 1)} style={styles.retryButton} />
+        </View>
+      ) : null}
       {requestError ? <Text style={styles.requestError}>{requestError}</Text> : null}
 
       {!showReport ? (
@@ -192,6 +203,8 @@ const styles = StyleSheet.create({
   scorePill: { backgroundColor: colors.primarySoft, borderRadius: 9, paddingHorizontal: 11, paddingVertical: 7, marginTop: 10 },
   score: { fontSize: 12, color: colors.primary, fontWeight: '700' },
   requestError: { color: colors.danger, backgroundColor: '#FFF1F0', borderRadius: 10, padding: 10, fontSize: 13, marginTop: 10 },
+  requestCheckError: { marginTop: 10 },
+  retryButton: { marginTop: 8, minHeight: 42, paddingVertical: 8 },
   explanationBox: { backgroundColor: colors.primarySoft, borderRadius: 14, padding: 14, marginBottom: 14 },
   explanationTitle: { color: colors.primary, fontSize: 13, fontWeight: '700', marginBottom: 7 },
   explanationText: { color: colors.text, fontSize: 13, lineHeight: 20 },

@@ -125,18 +125,18 @@ export default function UpdatesScreen() {
       ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyText}>No updates yet. Find a food buddy to get started!</Text></View>}
       renderItem={({ item }) => {
         const other = usersById[item.otherUserId];
-        if (!other) return null;
+        const otherName = other?.display_name ?? 'Student';
         const icon = item.kind === 'request' ? '🤝' : item.kind === 'accepted' ? '🎉' : item.kind === 'rejected' ? '↩️' : '💬';
         return (
           <Pressable
             style={styles.card}
             onPress={() => item.chatId
-              ? navigation.navigate('ChatsTab', { screen: 'ChatRoom', params: { chatId: item.chatId, otherUserName: other.display_name } })
+              ? navigation.navigate('ChatsTab', { screen: 'ChatRoom', params: { chatId: item.chatId, otherUserName: otherName } })
               : navigation.navigate('RequestsTab')}
           >
-            <Avatar name={other.display_name} uri={other.profile_photo_url} />
+            <Avatar name={otherName} uri={other?.profile_photo_url} />
             <View style={styles.body}>
-              <View style={styles.row}><Text style={styles.name}>{icon} {other.display_name}</Text><Text style={styles.time}>{formatTime(item.timestamp)}</Text></View>
+              <View style={styles.row}><Text style={styles.name}>{icon} {otherName}</Text><Text style={styles.time}>{formatTime(item.timestamp)}</Text></View>
               <Text style={styles.detail} numberOfLines={2}>{item.detail}</Text>
             </View>
           </Pressable>
