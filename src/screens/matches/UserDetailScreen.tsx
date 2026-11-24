@@ -93,8 +93,12 @@ export default function UserDetailScreen({ route, navigation }: Props) {
       await blockUser(firebaseUser.uid, candidateProfile.user_id);
       await refreshProfile();
       navigation.goBack();
-    } catch {
-      setBlockError('Could not block this user. Please try again.');
+    } catch (err: any) {
+      setBlockError(
+        err?.code === 'permission-denied'
+          ? 'Blocking needs the latest Firestore Rules to be published in Firebase Console.'
+          : err?.message ?? 'Could not block this user. Please try again.'
+      );
     } finally {
       setBlocking(false);
     }

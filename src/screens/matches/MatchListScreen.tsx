@@ -76,6 +76,8 @@ export default function MatchListScreen({ navigation }: Props) {
     (!sameLocationOnly || match.sameDiningLocation)
   );
   const hasFilters = mealTimeOnly || foodOnly || sameLocationOnly;
+  const topMatch = filteredMatches[0];
+  const remainingMatches = filteredMatches.slice(1);
 
   if (loading) {
     return (
@@ -110,7 +112,7 @@ export default function MatchListScreen({ navigation }: Props) {
 
   return (
     <FlatList
-      data={filteredMatches}
+      data={remainingMatches}
       keyExtractor={(item) => item.profile.user_id}
       contentContainerStyle={styles.list}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -119,6 +121,20 @@ export default function MatchListScreen({ navigation }: Props) {
           <Text style={styles.kicker}>DISCOVER</Text>
           <Text style={styles.pageTitle}>Your food circle</Text>
           <Text style={styles.pageSubtitle}>Compatible students based on time, food and location.</Text>
+          {topMatch ? (
+            <Pressable style={styles.topMatchCard} onPress={() => navigation.navigate('UserDetail', { candidate: topMatch })}>
+              <View style={styles.topMatchHeader}>
+                <View><Text style={styles.topMatchKicker}>TOP MATCH FOR YOU</Text><Text style={styles.topMatchName}>{topMatch.profile.display_name}</Text><Text style={styles.topMatchMeta}>📍 {topMatch.profile.dining_location}</Text></View>
+                <View style={styles.matchRing}><Text style={styles.matchScore}>{topMatch.score}</Text><Text style={styles.matchPercent}>%</Text></View>
+              </View>
+              <View style={styles.topMatchTags}>
+                {topMatch.sharedMealTimes.slice(0, 1).map((time) => <Tag key={time} label={time} selected />)}
+                {topMatch.sharedFoodPreferences.slice(0, 1).map((food) => <Tag key={food} label={food} />)}
+                {topMatch.sameDiningLocation ? <Tag label="Same spot" selected /> : null}
+              </View>
+              <Text style={styles.viewProfile}>View compatibility details  ›</Text>
+            </Pressable>
+          ) : null}
           <View style={styles.filterHeader}>
             <Text style={styles.filterTitle}>Filter matches</Text>
             {hasFilters ? <Pressable onPress={() => { setMealTimeOnly(false); setFoodOnly(false); setSameLocationOnly(false); }}><Text style={styles.clearText}>Clear</Text></Pressable> : null}
@@ -128,15 +144,16 @@ export default function MatchListScreen({ navigation }: Props) {
             <Tag label="Shared food" selected={foodOnly} onPress={() => setFoodOnly((value) => !value)} />
             <Tag label="Same spot" selected={sameLocationOnly} onPress={() => setSameLocationOnly((value) => !value)} />
           </View>
+          {topMatch ? <Text style={styles.browseTitle}>MORE COMPATIBLE STUDENTS</Text> : null}
         </View>
       }
       ListEmptyComponent={
-        <View style={styles.centered}>
+        filteredMatches.length === 0 ? <View style={styles.centered}>
           <Text style={styles.emptyTitle}>{hasFilters ? 'No matches for these filters' : 'No match available'}</Text>
           <Text style={styles.emptySubtitle}>
             {hasFilters ? 'Try removing a filter to see more compatible students.' : 'No suitable food buddies found. Try adding more food preferences, meal times or locations.'}
           </Text>
-        </View>
+        </View> : undefined
       }
       renderItem={({ item }) => (
         <Pressable
@@ -183,10 +200,21 @@ const styles = StyleSheet.create({
   kicker: { fontSize: 11, letterSpacing: 0.5, fontWeight: '700', color: colors.textMuted, marginBottom: 5 },
   pageTitle: { fontSize: 30, fontWeight: '700', color: colors.text },
   pageSubtitle: { fontSize: 13, lineHeight: 19, color: colors.textMuted, marginTop: 6, maxWidth: 300 },
+  topMatchCard: { marginTop: 18, backgroundColor: colors.primary, borderRadius: 20, padding: 18, shadowColor: colors.primaryDark, shadowOpacity: 0.22, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 4 },
+  topMatchHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  topMatchKicker: { color: '#D9EBFF', fontSize: 10, letterSpacing: 0.8, fontWeight: '700' },
+  topMatchName: { color: '#fff', fontSize: 23, fontWeight: '700', marginTop: 5 },
+  topMatchMeta: { color: '#D9EBFF', fontSize: 12, marginTop: 4 },
+  matchRing: { width: 58, height: 58, borderRadius: 29, borderWidth: 3, borderColor: '#fff', alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
+  matchScore: { color: '#fff', fontSize: 20, fontWeight: '700' },
+  matchPercent: { color: '#D9EBFF', fontSize: 11, fontWeight: '700', alignSelf: 'flex-start', marginTop: 12 },
+  topMatchTags: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 16 },
+  viewProfile: { color: '#fff', fontSize: 13, fontWeight: '700', marginTop: 4 },
   filterHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 10 },
   filterTitle: { fontSize: 13, fontWeight: '700', color: colors.text },
   clearText: { color: colors.primary, fontSize: 13, fontWeight: '600' },
   filterRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  browseTitle: { color: colors.textMuted, fontSize: 11, letterSpacing: 0.7, fontWeight: '700', marginTop: 18, marginBottom: 10 },
   card: {
     flexDirection: 'row',
     backgroundColor: colors.card,
