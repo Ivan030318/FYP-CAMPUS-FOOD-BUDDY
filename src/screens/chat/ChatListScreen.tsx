@@ -117,7 +117,7 @@ export default function ChatListScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyText: { color: colors.textMuted, textAlign: 'center' },
-  list: { padding: 20, flexGrow: 1 },
+  list: { padding: 20, paddingBottom: 112, flexGrow: 1 },
   intro: { paddingBottom: 20 },
   kicker: { fontSize: 11, letterSpacing: 0.5, fontWeight: '700', color: colors.textMuted, marginBottom: 5 },
   title: { fontSize: 30, fontWeight: '700', color: colors.text },

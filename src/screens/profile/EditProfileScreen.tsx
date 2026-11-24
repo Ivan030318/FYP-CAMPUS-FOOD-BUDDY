@@ -53,7 +53,7 @@ export default function EditProfileScreen() {
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.heroIcon}><Text style={styles.heroEmoji}>🥢</Text></View>
         <Text style={styles.heading}>Build your dining profile</Text>
         <Text style={styles.helper}>
@@ -102,7 +102,7 @@ export default function EditProfileScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
-  container: { padding: 20, paddingBottom: 48 },
+  container: { padding: 20, paddingBottom: 112 },
   heroIcon: { width: 54, height: 54, borderRadius: 27, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   heroEmoji: { fontSize: 27 },
   heading: { fontSize: 30, fontWeight: '700', color: colors.text },

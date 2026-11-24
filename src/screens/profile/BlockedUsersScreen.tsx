@@ -90,7 +90,7 @@ export default function BlockedUsersScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { padding: 20, flexGrow: 1 },
+  list: { padding: 20, paddingBottom: 112, flexGrow: 1 },
   intro: { paddingBottom: 20 },
   title: { fontSize: 30, fontWeight: '700', color: colors.text },
   subtitle: { fontSize: 13, lineHeight: 19, color: colors.textMuted, marginTop: 6 },

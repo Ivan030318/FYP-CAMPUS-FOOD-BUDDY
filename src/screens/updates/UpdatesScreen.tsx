@@ -148,7 +148,7 @@ export default function UpdatesScreen() {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  list: { padding: 20, flexGrow: 1, backgroundColor: colors.background },
+  list: { padding: 20, paddingBottom: 112, flexGrow: 1, backgroundColor: colors.background },
   intro: { paddingBottom: 20 },
   kicker: { fontSize: 11, letterSpacing: 0.5, fontWeight: '700', color: colors.textMuted, marginBottom: 5 },
   title: { fontSize: 30, fontWeight: '700', color: colors.text },

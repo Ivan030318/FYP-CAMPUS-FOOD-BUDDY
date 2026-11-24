@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MatchListScreen from '../screens/matches/MatchListScreen';
 import UserDetailScreen from '../screens/matches/UserDetailScreen';
 import RequestsScreen from '../screens/requests/RequestsScreen';
@@ -119,6 +120,7 @@ const TAB_ICONS: Record<keyof MainTabParamList, string> = {
 };
 
 export default function MainTabs() {
+  const insets = useSafeAreaInsets();
   const { firebaseUser } = useAuth();
   const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
@@ -151,7 +153,15 @@ export default function MainTabs() {
         tabBarIcon: () => (
           <Text style={{ fontSize: 20 }}>{TAB_ICONS[route.name as keyof MainTabParamList]}</Text>
         ),
-        tabBarStyle: { height: 64, paddingTop: 6, paddingBottom: 7, borderTopColor: colors.border, backgroundColor: colors.card, elevation: 0 },
+        tabBarStyle: {
+          height: 56 + Math.max(insets.bottom, 8),
+          paddingTop: 6,
+          paddingBottom: Math.max(insets.bottom, 8),
+          borderTopColor: colors.border,
+          backgroundColor: colors.card,
+          elevation: 0,
+        },
+        tabBarHideOnKeyboard: true,
         tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
       })}
     >

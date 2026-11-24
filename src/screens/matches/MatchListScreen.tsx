@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   setupCard: { width: '100%', maxWidth: 340, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 22, padding: 24, alignItems: 'center' },
   setupEmoji: { fontSize: 36, marginBottom: 12 },
   setupButton: { alignSelf: 'stretch', marginTop: 18 },
-  list: { padding: 20, paddingBottom: 32, flexGrow: 1 },
+  list: { padding: 20, paddingBottom: 112, flexGrow: 1 },
   intro: { paddingBottom: 20 },
   kicker: { fontSize: 11, letterSpacing: 0.5, fontWeight: '700', color: colors.textMuted, marginBottom: 5 },
   pageTitle: { fontSize: 30, fontWeight: '700', color: colors.text },

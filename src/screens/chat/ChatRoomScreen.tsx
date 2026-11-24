@@ -71,6 +71,8 @@ export default function ChatRoomScreen({ route }: Props) {
         data={messages}
         keyExtractor={(item) => item.message_id}
         contentContainerStyle={styles.list}
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+        keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         renderItem={({ item }) => {
           const mine = item.sender_id === firebaseUser?.uid;

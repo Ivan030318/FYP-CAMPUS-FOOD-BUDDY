@@ -143,7 +143,7 @@ export default function ProfileScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, paddingBottom: 48 },
+  container: { padding: 20, paddingBottom: 112 },
   header: { alignItems: 'center', backgroundColor: colors.card, borderRadius: 18, paddingVertical: 26, marginBottom: 20, borderWidth: 1, borderColor: colors.border },
   avatarRing: { backgroundColor: colors.primarySoft, padding: 4, borderRadius: 44 },
   name: { fontSize: 24, fontWeight: '700', color: colors.text, marginTop: 12 },

@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorText: { color: colors.danger, backgroundColor: '#FFF1F0', marginHorizontal: 20, marginTop: 14, borderRadius: 10, padding: 10, fontSize: 13 },
-  list: { padding: 20, flexGrow: 1 },
+  list: { padding: 20, paddingBottom: 112, flexGrow: 1 },
   card: {
     flexDirection: 'row',
     backgroundColor: colors.card,
