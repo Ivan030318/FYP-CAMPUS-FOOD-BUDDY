@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { subscribeToMyRequests, respondToRequest } from '../../services/requestService';
 import { getUsersByIds } from '../../services/userService';
@@ -12,6 +13,7 @@ import type { FoodBuddyRequest, PublicUserProfile } from '../../types';
 type Tab = 'incoming' | 'outgoing';
 
 export default function RequestsScreen() {
+  const insets = useSafeAreaInsets();
   const { profile, firebaseUser } = useAuth();
   const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
   const [usersById, setUsersById] = useState<Record<string, PublicUserProfile>>({});
@@ -85,7 +87,7 @@ export default function RequestsScreen() {
 
   return (
     <View style={styles.flex}>
-      <View style={styles.hero}>
+      <View style={[styles.hero, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.kicker}>CONNECTIONS</Text>
         <Text style={styles.title}>Buddy requests</Text>
       </View>
@@ -158,7 +160,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyText: { color: colors.textMuted, textAlign: 'center' },
-  hero: { backgroundColor: colors.background, paddingHorizontal: 20, paddingTop: 22, paddingBottom: 14 },
+  hero: { backgroundColor: colors.background, paddingHorizontal: 20, paddingBottom: 14 },
   kicker: { fontSize: 11, letterSpacing: 0.5, fontWeight: '700', color: colors.textMuted, marginBottom: 5 },
   title: { fontSize: 30, fontWeight: '700', color: colors.text },
   tabRow: {

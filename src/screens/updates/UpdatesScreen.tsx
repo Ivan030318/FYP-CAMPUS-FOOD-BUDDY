@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { subscribeToMyRequests } from '../../services/requestService';
 import { subscribeToMyChats } from '../../services/chatService';
@@ -27,6 +28,7 @@ function formatTime(timestamp: number): string {
 }
 
 export default function UpdatesScreen() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { firebaseUser } = useAuth();
   const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
@@ -121,7 +123,7 @@ export default function UpdatesScreen() {
       data={updates}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.list}
-      ListHeaderComponent={<View style={styles.intro}><Text style={styles.kicker}>STAY UPDATED</Text><Text style={styles.title}>Updates</Text><Text style={styles.helper}>Requests and chat activity in one place.</Text></View>}
+      ListHeaderComponent={<View style={[styles.intro, { paddingTop: insets.top + 12 }]}><Text style={styles.kicker}>STAY UPDATED</Text><Text style={styles.title}>Updates</Text><Text style={styles.helper}>Requests and chat activity in one place.</Text></View>}
       ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyText}>No updates yet. Find a food buddy to get started!</Text></View>}
       renderItem={({ item }) => {
         const other = usersById[item.otherUserId];
