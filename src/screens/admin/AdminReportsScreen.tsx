@@ -53,10 +53,11 @@ export default function AdminReportsScreen() {
   );
 
   const handleResolve = async (reportId: string) => {
+    if (!firebaseUser) return;
     setResolvingId(reportId);
     setError('');
     try {
-      await resolveReport(reportId);
+      await resolveReport(reportId, firebaseUser.uid);
     } catch (err: any) {
       const message = err?.message ?? 'Could not update this report.';
       setError(message);
@@ -107,6 +108,7 @@ export default function AdminReportsScreen() {
             <Text style={styles.label}>Reported student</Text><Text style={styles.name}>{reported}</Text>
             <Text style={styles.label}>Submitted by</Text><Text style={styles.value}>{reporter}</Text>
             <Text style={styles.label}>Reason</Text><Text style={styles.reason}>{item.reason}</Text>
+            {!pending && item.resolved_at ? <Text style={styles.resolvedNote}>Resolved {formatDate(item.resolved_at)}</Text> : null}
             {pending ? <Button title="Mark as Resolved" onPress={() => handleResolve(item.report_id)} loading={resolvingId === item.report_id} style={styles.button} /> : null}
           </View>
         );
@@ -137,5 +139,6 @@ const styles = StyleSheet.create({
   name: { fontSize: 16, fontWeight: '800', color: colors.text, marginTop: 2 },
   value: { fontSize: 14, color: colors.text, marginTop: 2 },
   reason: { fontSize: 14, color: colors.text, lineHeight: 20, marginTop: 4 },
+  resolvedNote: { fontSize: 12, color: colors.success, fontWeight: '600', marginTop: 14 },
   button: { marginTop: 16, paddingVertical: 11 },
 });

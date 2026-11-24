@@ -161,8 +161,13 @@ service cloud.firestore {
         && request.resource.data.submitted_at is number;
       allow read: if isAdmin();
       allow update: if isAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-        && (request.resource.data.status == 'pending' || request.resource.data.status == 'resolved');
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'resolved_at', 'resolved_by'
+        ])
+        && request.resource.data.status == 'resolved'
+        && request.resource.data.resolved_at is number
+        && request.resource.data.resolved_by == request.auth.uid;
       allow delete: if false;
     }
   }

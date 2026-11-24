@@ -25,7 +25,7 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
 - **Report / Block** — report a user once per pair or block/unblock them. A block hides the user
   from matching and prevents new requests in either direction.
 - **Admin report review** — a role-protected dashboard lets an assigned admin review reports and
-  mark them resolved.
+  mark them resolved with an audit timestamp and administrator UID.
 
 Not yet built (see FYP1 Chapter 6 "Future Work" — beyond the core-features pass done here):
 push notifications (FCM), the admin web console for managing users/reports, and refinements

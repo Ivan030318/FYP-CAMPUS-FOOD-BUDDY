@@ -55,6 +55,10 @@ export function subscribeToReports(
   );
 }
 
-export async function resolveReport(reportId: string): Promise<void> {
-  await updateDoc(doc(reportsCol, reportId), { status: 'resolved' as ReportStatus });
+export async function resolveReport(reportId: string, adminUid: string): Promise<void> {
+  await updateDoc(doc(reportsCol, reportId), {
+    status: 'resolved' as ReportStatus,
+    resolved_at: Date.now(),
+    resolved_by: adminUid,
+  });
 }

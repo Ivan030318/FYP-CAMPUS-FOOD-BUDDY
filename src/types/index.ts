@@ -76,4 +76,6 @@ export interface Report {
   reason: string;
   status: ReportStatus;
   submitted_at: number;
+  resolved_at?: number;
+  resolved_by?: string;
 }
