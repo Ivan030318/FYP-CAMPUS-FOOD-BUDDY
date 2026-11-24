@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
-import { subscribeToMyChats } from '../../services/chatService';
+import { hasUnreadMessage, subscribeToMyChats } from '../../services/chatService';
 import { getUsersByIds } from '../../services/userService';
 import { Avatar } from '../../components/Avatar';
 import { colors } from '../../theme/colors';
+import { LoadError } from '../../components/LoadError';
 import type { Chat, PublicUserProfile } from '../../types';
 import type { ChatsStackParamList } from '../../navigation/MainTabs';
 
@@ -23,15 +24,26 @@ export default function ChatListScreen({ navigation }: Props) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [usersById, setUsersById] = useState<Record<string, PublicUserProfile>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!firebaseUser) return;
-    const unsubscribe = subscribeToMyChats(firebaseUser.uid, (list) => {
-      setChats(list);
-      setLoading(false);
-    });
+    setLoading(true);
+    setLoadError(false);
+    const unsubscribe = subscribeToMyChats(
+      firebaseUser.uid,
+      (list) => {
+        setChats(list);
+        setLoading(false);
+      },
+      () => {
+        setLoadError(true);
+        setLoading(false);
+      }
+    );
     return unsubscribe;
-  }, [firebaseUser]);
+  }, [firebaseUser, retryKey]);
 
   useEffect(() => {
     const otherIds = Array.from(
@@ -48,6 +60,8 @@ export default function ChatListScreen({ navigation }: Props) {
       </View>
     );
   }
+
+  if (loadError) return <LoadError title="Could not load chats" onRetry={() => setRetryKey((key) => key + 1)} />;
 
   return (
     <FlatList
@@ -71,6 +85,7 @@ export default function ChatListScreen({ navigation }: Props) {
         const otherId = item.user_ids.find((id) => id !== firebaseUser?.uid);
         const other = otherId ? usersById[otherId] : undefined;
         if (!other) return null;
+        const unread = firebaseUser ? hasUnreadMessage(item, firebaseUser.uid) : false;
         return (
           <Pressable
             style={styles.card}
@@ -84,12 +99,13 @@ export default function ChatListScreen({ navigation }: Props) {
             <Avatar name={other.display_name} uri={other.profile_photo_url} />
             <View style={styles.cardBody}>
               <View style={styles.rowBetween}>
-                <Text style={styles.name}>{other.display_name}</Text>
+                <Text style={[styles.name, unread && styles.nameUnread]}>{other.display_name}</Text>
                 <Text style={styles.time}>{formatTime(item.last_message_time)}</Text>
               </View>
-              <Text style={styles.preview} numberOfLines={1}>
+              <Text style={[styles.preview, unread && styles.previewUnread]} numberOfLines={1}>
                 {item.last_message_preview}
               </Text>
+              {unread ? <View style={styles.unreadDot} /> : null}
             </View>
           </Pressable>
         );
@@ -117,6 +133,9 @@ const styles = StyleSheet.create({
   cardBody: { marginLeft: 12, flex: 1 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between' },
   name: { fontSize: 16, fontWeight: '800', color: colors.text },
+  nameUnread: { color: colors.primary },
   time: { fontSize: 11, color: colors.textMuted },
   preview: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
+  previewUnread: { color: colors.text, fontWeight: '600' },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary, position: 'absolute', right: 0, bottom: 4 },
 });

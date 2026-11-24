@@ -132,6 +132,11 @@ export async function respondToRequest(
       user_ids: [data.requester_id, data.recipient_id],
       last_message_preview: 'You are now matched! Say hi 👋',
       last_message_time: respondedAt,
+      last_message_sender_id: '',
+      last_read_at: {
+        [data.requester_id]: respondedAt,
+        [data.recipient_id]: respondedAt,
+      },
     });
   });
 }

@@ -17,7 +17,8 @@ import { colors } from '../theme/colors';
 import type { MatchCandidate } from '../services/matchService';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToMyRequests } from '../services/requestService';
-import type { FoodBuddyRequest } from '../types';
+import { hasUnreadMessage, subscribeToMyChats } from '../services/chatService';
+import type { Chat, FoodBuddyRequest } from '../types';
 
 export type MatchesStackParamList = {
   MatchList: undefined;
@@ -123,15 +124,25 @@ const TAB_ICONS: Record<keyof MainTabParamList, string> = {
 export default function MainTabs() {
   const { firebaseUser } = useAuth();
   const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
 
   useEffect(() => {
     if (!firebaseUser) return;
     return subscribeToMyRequests(firebaseUser.uid, setRequests);
   }, [firebaseUser]);
 
+  useEffect(() => {
+    if (!firebaseUser) return;
+    return subscribeToMyChats(firebaseUser.uid, setChats);
+  }, [firebaseUser]);
+
   const pendingIncomingCount = useMemo(
     () => requests.filter((request) => request.recipient_id === firebaseUser?.uid && request.status === 'pending').length,
     [requests, firebaseUser]
+  );
+  const unreadChatCount = useMemo(
+    () => firebaseUser ? chats.filter((chat) => hasUnreadMessage(chat, firebaseUser.uid)).length : 0,
+    [chats, firebaseUser]
   );
 
   return (
@@ -149,7 +160,15 @@ export default function MainTabs() {
     >
       <Tab.Screen name="MatchesTab" component={MatchesStack} options={{ title: 'Matches' }} />
       <Tab.Screen name="RequestsTab" component={RequestsScreen} options={{ title: 'Requests' }} />
-      <Tab.Screen name="ChatsTab" component={ChatsStack} options={{ title: 'Chats' }} />
+      <Tab.Screen
+        name="ChatsTab"
+        component={ChatsStack}
+        options={{
+          title: 'Chats',
+          tabBarBadge: unreadChatCount || undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.primary, color: '#fff', fontSize: 10, minWidth: 17, height: 17 },
+        }}
+      />
       <Tab.Screen
         name="UpdatesTab"
         component={UpdatesScreen}

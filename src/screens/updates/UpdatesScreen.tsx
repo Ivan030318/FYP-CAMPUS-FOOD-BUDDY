@@ -7,6 +7,7 @@ import { subscribeToMyChats } from '../../services/chatService';
 import { getUsersByIds } from '../../services/userService';
 import { Avatar } from '../../components/Avatar';
 import { colors } from '../../theme/colors';
+import { LoadError } from '../../components/LoadError';
 import type { Chat, FoodBuddyRequest, PublicUserProfile } from '../../types';
 
 type UpdateItem = {
@@ -33,22 +34,42 @@ export default function UpdatesScreen() {
   const [usersById, setUsersById] = useState<Record<string, PublicUserProfile>>({});
   const [requestsLoaded, setRequestsLoaded] = useState(false);
   const [chatsLoaded, setChatsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!firebaseUser) return;
-    return subscribeToMyRequests(firebaseUser.uid, (items) => {
-      setRequests(items);
-      setRequestsLoaded(true);
-    });
-  }, [firebaseUser]);
+    setRequestsLoaded(false);
+    setLoadError(false);
+    return subscribeToMyRequests(
+      firebaseUser.uid,
+      (items) => {
+        setRequests(items);
+        setRequestsLoaded(true);
+      },
+      () => {
+        setLoadError(true);
+        setRequestsLoaded(true);
+      }
+    );
+  }, [firebaseUser, retryKey]);
 
   useEffect(() => {
     if (!firebaseUser) return;
-    return subscribeToMyChats(firebaseUser.uid, (items) => {
-      setChats(items);
-      setChatsLoaded(true);
-    });
-  }, [firebaseUser]);
+    setChatsLoaded(false);
+    setLoadError(false);
+    return subscribeToMyChats(
+      firebaseUser.uid,
+      (items) => {
+        setChats(items);
+        setChatsLoaded(true);
+      },
+      () => {
+        setLoadError(true);
+        setChatsLoaded(true);
+      }
+    );
+  }, [firebaseUser, retryKey]);
 
   const updates = useMemo<UpdateItem[]>(() => {
     if (!firebaseUser) return [];
@@ -67,16 +88,17 @@ export default function UpdatesScreen() {
           : received ? 'You declined this food buddy request' : 'declined your food buddy request';
       return { id: `request-${request.request_id}`, kind, otherUserId, timestamp: request.responded_at ?? request.created_at, detail };
     });
-    const chatUpdates = chats.map((chat) => {
+    const chatUpdates = chats.flatMap((chat) => {
+      if (chat.last_message_sender_id && chat.last_message_sender_id === firebaseUser.uid) return [];
       const otherUserId = chat.user_ids.find((id) => id !== firebaseUser.uid) ?? firebaseUser.uid;
-      return {
+      return [{
         id: `chat-${chat.chat_id}`,
         kind: 'chat' as const,
         otherUserId,
         timestamp: chat.last_message_time,
         detail: chat.last_message_preview,
         chatId: chat.chat_id,
-      };
+      }];
     });
     return [...requestUpdates, ...chatUpdates].sort((a, b) => b.timestamp - a.timestamp);
   }, [requests, chats, firebaseUser]);
@@ -85,6 +107,10 @@ export default function UpdatesScreen() {
     const ids = Array.from(new Set(updates.map((item) => item.otherUserId)));
     if (ids.length) getUsersByIds(ids).then(setUsersById);
   }, [updates]);
+
+  if (loadError) {
+    return <LoadError title="Could not load updates" onRetry={() => setRetryKey((key) => key + 1)} />;
+  }
 
   if (!requestsLoaded || !chatsLoaded) {
     return <View style={styles.centered}><ActivityIndicator color={colors.primary} /></View>;

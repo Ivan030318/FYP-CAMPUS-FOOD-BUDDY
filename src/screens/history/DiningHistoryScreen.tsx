@@ -5,6 +5,7 @@ import { subscribeToMyRequests } from '../../services/requestService';
 import { getUsersByIds } from '../../services/userService';
 import { Avatar } from '../../components/Avatar';
 import { colors } from '../../theme/colors';
+import { LoadError } from '../../components/LoadError';
 import type { FoodBuddyRequest, PublicUserProfile } from '../../types';
 
 function formatDate(ts: number): string {
@@ -20,15 +21,26 @@ export default function DiningHistoryScreen() {
   const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
   const [usersById, setUsersById] = useState<Record<string, PublicUserProfile>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!firebaseUser) return;
-    const unsubscribe = subscribeToMyRequests(firebaseUser.uid, (list) => {
-      setRequests(list);
-      setLoading(false);
-    });
+    setLoading(true);
+    setLoadError(false);
+    const unsubscribe = subscribeToMyRequests(
+      firebaseUser.uid,
+      (list) => {
+        setRequests(list);
+        setLoading(false);
+      },
+      () => {
+        setLoadError(true);
+        setLoading(false);
+      }
+    );
     return unsubscribe;
-  }, [firebaseUser]);
+  }, [firebaseUser, retryKey]);
 
   const accepted = useMemo(
     () => requests.filter((r) => r.status === 'accepted').sort((a, b) => (b.responded_at ?? b.created_at) - (a.responded_at ?? a.created_at)),
@@ -54,6 +66,8 @@ export default function DiningHistoryScreen() {
       </View>
     );
   }
+
+  if (loadError) return <LoadError title="Could not load buddy history" onRetry={() => setRetryKey((key) => key + 1)} />;
 
   return (
     <FlatList

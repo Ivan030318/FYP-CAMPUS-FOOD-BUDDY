@@ -16,7 +16,8 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
 - **Food buddy requests** — one request per pair; only the recipient can accept/reject a
   pending request. Accepting atomically creates the pair's one chat and records the response time.
 - **Real-time chat** — one chat per accepted match. A message and its chat-list preview are saved
-  atomically, so they cannot become inconsistent.
+  atomically, so they cannot become inconsistent. Unread messages show a live Chats badge and are
+  marked read when the conversation is opened.
 - **Updates** — a free in-app activity feed for buddy-request outcomes and chat activity, with a
   live badge for pending incoming requests.
 - **Buddy history** — list of all accepted food buddy connections (not a claim that students

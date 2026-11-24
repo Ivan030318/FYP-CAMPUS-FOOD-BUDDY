@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
-import { subscribeToMessages, sendMessage } from '../../services/chatService';
+import { markChatRead, subscribeToMessages, sendMessage } from '../../services/chatService';
+import { LoadError } from '../../components/LoadError';
 import { colors } from '../../theme/colors';
 import type { Message } from '../../types';
 import type { ChatsStackParamList } from '../../navigation/MainTabs';
@@ -26,14 +27,23 @@ export default function ChatRoomScreen({ route }: Props) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
   const [loadError, setLoadError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
   const listRef = useRef<FlatList<Message>>(null);
 
   useEffect(() => {
-    const unsubscribe = subscribeToMessages(chatId, setMessages, () => {
+    setLoadError('');
+    const unsubscribe = subscribeToMessages(chatId, (nextMessages) => {
+      setMessages(nextMessages);
+      if (firebaseUser) markChatRead(chatId, firebaseUser.uid).catch(() => undefined);
+    }, () => {
       setLoadError('Could not load messages. Check your connection and try again.');
     });
     return unsubscribe;
-  }, [chatId]);
+  }, [chatId, firebaseUser, retryKey]);
+
+  if (loadError) {
+    return <LoadError title="Could not load messages" message={loadError} onRetry={() => setRetryKey((key) => key + 1)} />;
+  }
 
   const handleSend = async () => {
     const text = draft.trim();
@@ -78,7 +88,6 @@ export default function ChatRoomScreen({ route }: Props) {
           );
         }}
       />
-      {loadError ? <Text style={styles.errorText}>{loadError}</Text> : null}
       {sendError ? <Text style={styles.errorText}>{sendError}</Text> : null}
       <View style={styles.inputRow}>
         <TextInput

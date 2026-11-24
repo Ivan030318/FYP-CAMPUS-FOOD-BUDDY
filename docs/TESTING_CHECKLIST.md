@@ -12,7 +12,7 @@ each test when preparing the FYP demonstration.
 | T05 | Matching | Complete compatible profiles for both students. | The other student appears with an explainable percentage score. |
 | T06 | Request | Student A sends Student B a request. | Student B sees it in Requests and Updates shows a badge. |
 | T07 | Accept + chat | Student B accepts the request. | Both students see one chat; Buddy History lists the connection. |
-| T08 | Live message | Send a message from Student A to Student B. | Message and chat preview update for both users. |
+| T08 | Live message + unread state | Send a message from Student A to Student B while Student B is outside the chat. | Message and chat preview update; Student B sees a Chats badge and unread dot, which clear after opening the chat. |
 | T09 | Block | Block a student from their profile. | They disappear from Matches and cannot receive a new request. |
 | T10 | Report | Submit a report with a reason. | The report is created and unavailable to normal users. |
 | T11 | Admin review | Sign in as the assigned admin and open Profile → Admin: Review Reports. | Report is visible and can be marked Resolved. |

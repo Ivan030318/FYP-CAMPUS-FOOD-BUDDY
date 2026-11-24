@@ -1,10 +1,12 @@
 import {
   collection,
   doc,
+  FieldPath,
   onSnapshot,
   query,
   where,
   orderBy,
+  updateDoc,
   writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
@@ -12,6 +14,12 @@ import { firestore } from '../config/firebase';
 import type { Chat, Message } from '../types';
 
 const chatsCol = collection(firestore, 'chats');
+
+export function hasUnreadMessage(chat: Chat, uid: string): boolean {
+  return !!chat.last_message_sender_id
+    && chat.last_message_sender_id !== uid
+    && (chat.last_read_at?.[uid] ?? 0) < chat.last_message_time;
+}
 
 export function subscribeToMyChats(
   uid: string,
@@ -58,6 +66,7 @@ export async function sendMessage(
   if (text.length > 1000) throw new Error('Messages must be 1,000 characters or fewer.');
 
   const sentAt = Date.now();
+  const chatRef = doc(chatsCol, chatId);
   const batch = writeBatch(firestore);
   batch.set(doc(messagesCol(chatId)), {
     chat_id: chatId,
@@ -65,9 +74,16 @@ export async function sendMessage(
     text_content: text,
     sent_at: sentAt,
   });
-  batch.update(doc(chatsCol, chatId), {
-    last_message_preview: text.slice(0, 80),
-    last_message_time: sentAt,
-  });
+  batch.update(
+    chatRef,
+    'last_message_preview', text.slice(0, 80),
+    'last_message_time', sentAt,
+    'last_message_sender_id', senderId,
+    new FieldPath('last_read_at', senderId), sentAt
+  );
   await batch.commit();
+}
+
+export async function markChatRead(chatId: string, uid: string): Promise<void> {
+  await updateDoc(doc(chatsCol, chatId), new FieldPath('last_read_at', uid), Date.now());
 }

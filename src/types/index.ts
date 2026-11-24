@@ -55,6 +55,10 @@ export interface Chat {
   user_ids: string[];
   last_message_preview: string;
   last_message_time: number;
+  /** Empty for the initial match message; set for every user-sent message. */
+  last_message_sender_id?: string;
+  /** Per-user timestamps used to calculate unread chat activity. */
+  last_read_at?: Record<string, number>;
 }
 
 export interface Message {

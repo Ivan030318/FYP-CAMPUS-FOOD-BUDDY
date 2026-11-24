@@ -6,6 +6,7 @@ import { getUsersByIds } from '../../services/userService';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { colors } from '../../theme/colors';
+import { LoadError } from '../../components/LoadError';
 import type { FoodBuddyRequest, PublicUserProfile } from '../../types';
 
 type Tab = 'incoming' | 'outgoing';
@@ -18,15 +19,26 @@ export default function RequestsScreen() {
   const [tab, setTab] = useState<Tab>('incoming');
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
+  const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!firebaseUser) return;
-    const unsubscribe = subscribeToMyRequests(firebaseUser.uid, (list) => {
-      setRequests(list);
-      setLoading(false);
-    });
+    setLoading(true);
+    setLoadError(false);
+    const unsubscribe = subscribeToMyRequests(
+      firebaseUser.uid,
+      (list) => {
+        setRequests(list);
+        setLoading(false);
+      },
+      () => {
+        setLoadError(true);
+        setLoading(false);
+      }
+    );
     return unsubscribe;
-  }, [firebaseUser]);
+  }, [firebaseUser, retryKey]);
 
   useEffect(() => {
     const otherIds = Array.from(
@@ -66,6 +78,8 @@ export default function RequestsScreen() {
       </View>
     );
   }
+
+  if (loadError) return <LoadError title="Could not load requests" onRetry={() => setRetryKey((key) => key + 1)} />;
 
   const data = tab === 'incoming' ? incoming : outgoing;
 

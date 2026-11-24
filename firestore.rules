@@ -107,7 +107,8 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && chatId == request.resource.data.request_id
         && request.resource.data.keys().hasOnly([
-          'request_id', 'user_ids', 'last_message_preview', 'last_message_time'
+          'request_id', 'user_ids', 'last_message_preview', 'last_message_time',
+          'last_message_sender_id', 'last_read_at'
         ])
         && getAfter(/databases/$(database)/documents/foodBuddyRequests/$(chatId)).data.status == 'accepted'
         && getAfter(/databases/$(database)/documents/foodBuddyRequests/$(chatId)).data.recipient_id == request.auth.uid
@@ -115,12 +116,14 @@ service cloud.firestore {
         && request.resource.data.user_ids.hasAll([
           getAfter(/databases/$(database)/documents/foodBuddyRequests/$(chatId)).data.requester_id,
           getAfter(/databases/$(database)/documents/foodBuddyRequests/$(chatId)).data.recipient_id
-        ]);
+        ])
+        && request.resource.data.last_message_sender_id is string
+        && request.resource.data.last_read_at is map;
 
       // Participants and request linkage can never be changed after creation.
       allow update: if isChatMember(resource)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'last_message_preview', 'last_message_time'
+          'last_message_preview', 'last_message_time', 'last_message_sender_id', 'last_read_at'
         ]);
       allow delete: if false;
 
