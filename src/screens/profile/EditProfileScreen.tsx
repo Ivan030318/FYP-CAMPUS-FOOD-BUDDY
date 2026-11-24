@@ -23,6 +23,12 @@ export default function EditProfileScreen() {
     setList(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
   };
 
+  const fillDemoDetails = () => {
+    setFoodPreferences(['Halal Food', 'Asian Food']);
+    setMealTimes(['Lunch', 'Dinner']);
+    setDiningLocation('MMU Food Court');
+  };
+
   const handleSave = async () => {
     if (!firebaseUser) return;
     if (foodPreferences.length === 0 || mealTimes.length === 0 || !diningLocation.trim()) {
@@ -60,6 +66,10 @@ export default function EditProfileScreen() {
           This helps Campus Food Buddy match you with students who share your meal times, food
           preferences and dining location.
         </Text>
+        <View style={styles.demoCard}>
+          <View style={styles.demoCopy}><Text style={styles.demoTitle}>Preparing a demo?</Text><Text style={styles.demoText}>Fill example preferences, times and location in one tap. Review them, then save when ready.</Text></View>
+          <Button title="Fill Demo Details" variant="outline" onPress={fillDemoDetails} style={styles.demoButton} />
+        </View>
 
         <View style={styles.selectionCard}><Text style={styles.sectionTitle}>Food preferences</Text>
         <Text style={styles.sectionHint}>Choose one or more foods you enjoy.</Text><View style={styles.tagRow}>
@@ -107,6 +117,11 @@ const styles = StyleSheet.create({
   heroEmoji: { fontSize: 27 },
   heading: { fontSize: 30, fontWeight: '700', color: colors.text },
   helper: { fontSize: 13, lineHeight: 19, color: colors.textMuted, marginTop: 7, marginBottom: 20 },
+  demoCard: { backgroundColor: colors.primarySoft, borderRadius: 16, borderWidth: 1, borderColor: '#C8E1FF', padding: 14, marginBottom: 12 },
+  demoCopy: { marginBottom: 10 },
+  demoTitle: { color: colors.text, fontSize: 14, fontWeight: '700' },
+  demoText: { color: colors.textMuted, fontSize: 12, lineHeight: 18, marginTop: 3 },
+  demoButton: { paddingVertical: 10 },
   selectionCard: { backgroundColor: colors.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 12 },
   sectionTitle: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: 4 },
   sectionHint: { fontSize: 12, color: colors.textMuted, marginBottom: 12 },

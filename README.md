@@ -132,6 +132,10 @@ Chapter 3.4), or press `a` to launch an Android emulator, or `w` for a quick web
 Create two accounts (e.g. on two phones, or one phone + web preview) to test matching,
 sending a request, accepting it, and chatting.
 
+For a faster supervisor demonstration, open **Profile → Edit Profile → Fill Demo Details** for
+each test account, review the values, and tap **Save Profile**. This fills matching-friendly sample
+preferences without creating hidden accounts or writing any data until you save.
+
 ### Quality checks
 
 Run the same checks used by GitHub Actions before a demo or push:
