@@ -11,6 +11,7 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
   across app restarts; users can request a Firebase password-reset email from the login page.
 - **Profile** — set food preferences, available meal times and dining location; edit anytime.
   Profiles use a consistent name-initial avatar, so the app stays within Firebase's free plan.
+- **Accessibility** — reusable buttons, tags and avatars expose descriptive labels for screen readers.
 - **Matching** — explainable compatibility score: shared meal times (50%), food preferences
   (30%), and same dining location (20%). Pending/accepted connections and low matches are hidden.
 - **Food buddy requests** — one request per pair; only the recipient can accept/reject a

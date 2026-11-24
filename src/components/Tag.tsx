@@ -14,6 +14,9 @@ export function Tag({ label, selected, onPress }: Props) {
       onPress={onPress}
       style={[styles.tag, selected && styles.tagSelected]}
       disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : 'text'}
+      accessibilityLabel={label}
+      accessibilityState={{ selected: !!selected, disabled: !onPress }}
     >
       <Text style={[styles.text, selected && styles.textSelected]}>{label}</Text>
     </Pressable>

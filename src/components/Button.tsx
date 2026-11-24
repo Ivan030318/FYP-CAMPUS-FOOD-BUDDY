@@ -9,15 +9,21 @@ interface Props {
   disabled?: boolean;
   variant?: 'primary' | 'outline' | 'danger';
   style?: ViewStyle;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
-export function Button({ title, onPress, loading, disabled, variant = 'primary', style }: Props) {
+export function Button({ title, onPress, loading, disabled, variant = 'primary', style, accessibilityLabel, accessibilityHint }: Props) {
   const isOutline = variant === 'outline';
   const isDanger = variant === 'danger';
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: !!disabled || !!loading, busy: !!loading }}
       style={({ pressed }) => [
         styles.base,
         isOutline && styles.outline,

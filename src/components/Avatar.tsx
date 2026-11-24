@@ -13,11 +13,11 @@ export function Avatar({ name, uri, size = 48 }: Props) {
   const dimensionStyle = { width: size, height: size, borderRadius: size / 2 };
 
   if (uri) {
-    return <Image source={{ uri }} style={[styles.image, dimensionStyle]} />;
+    return <Image source={{ uri }} style={[styles.image, dimensionStyle]} accessibilityLabel={`${name} profile picture`} />;
   }
 
   return (
-    <View style={[styles.placeholder, dimensionStyle]}>
+    <View style={[styles.placeholder, dimensionStyle]} accessibilityLabel={`${name} avatar`}>
       <Text style={[styles.initial, { fontSize: size * 0.4 }]}>{initial}</Text>
     </View>
   );
