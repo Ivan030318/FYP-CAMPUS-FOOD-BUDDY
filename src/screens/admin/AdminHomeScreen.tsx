@@ -43,6 +43,11 @@ export default function AdminHomeScreen({ navigation }: Props) {
 
   const pendingCount = useMemo(() => reports.filter((report) => report.status === 'pending').length, [reports]);
   const resolvedCount = reports.length - pendingCount;
+  const resolutionRate = reports.length ? Math.round((resolvedCount / reports.length) * 100) : 0;
+  const recentReports = useMemo(() => {
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    return reports.filter((report) => report.submitted_at >= sevenDaysAgo).length;
+  }, [reports]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -77,6 +82,11 @@ export default function AdminHomeScreen({ navigation }: Props) {
       <View style={[styles.statCard, styles.suspendedCard]}>
         <Text style={styles.statNumber}>{suspensionCount}</Text>
         <Text style={styles.statLabel}>Suspended accounts</Text>
+      </View>
+
+      <View style={styles.insightCard}>
+        <View><Text style={styles.insightLabel}>MODERATION PERFORMANCE</Text><Text style={styles.insightValue}>{resolutionRate}% resolution rate</Text><Text style={styles.insightText}>{recentReports} report{recentReports === 1 ? '' : 's'} received in the last 7 days</Text></View>
+        <Text style={styles.insightEmoji}>📈</Text>
       </View>
 
       <Pressable style={styles.moduleCard} onPress={() => navigation.navigate('AdminReports')}>
@@ -115,6 +125,11 @@ const styles = StyleSheet.create({
   statCard: { flex: 1, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 16, padding: 18 },
   pendingCard: { backgroundColor: colors.primarySoft, borderColor: '#C8E1FF' },
   suspendedCard: { marginBottom: 16, backgroundColor: '#FFF8E8', borderColor: '#F3DDA5' },
+  insightCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 16 },
+  insightLabel: { color: colors.textMuted, fontSize: 10, letterSpacing: 0.6, fontWeight: '700' },
+  insightValue: { color: colors.text, fontSize: 17, fontWeight: '700', marginTop: 5 },
+  insightText: { color: colors.textMuted, fontSize: 12, marginTop: 4 },
+  insightEmoji: { fontSize: 26 },
   statNumber: { color: colors.text, fontSize: 28, fontWeight: '700' },
   statLabel: { color: colors.textMuted, fontSize: 13, marginTop: 4, fontWeight: '600' },
   moduleCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 16, marginBottom: 16 },

@@ -50,6 +50,13 @@ export default function ProfileScreen({ navigation }: Props) {
 
   if (!profile) return null;
 
+  const completedFields = [
+    profile.food_preferences.length > 0,
+    profile.available_meal_times.length > 0,
+    Boolean(profile.dining_location.trim()),
+  ].filter(Boolean).length;
+  const completion = Math.round((completedFields / 3) * 100);
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
@@ -68,6 +75,15 @@ export default function ProfileScreen({ navigation }: Props) {
       ) : (
         <View style={styles.verifiedCard}><Text style={styles.verifiedText}>✓ University email verified</Text></View>
       )}
+
+      <View style={styles.completionCard}>
+        <View style={styles.completionRow}>
+          <View><Text style={styles.completionTitle}>Dining profile</Text><Text style={styles.completionText}>{completedFields}/3 details completed</Text></View>
+          <Text style={styles.completionPercent}>{completion}%</Text>
+        </View>
+        <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${completion}%` }]} /></View>
+        {completion < 100 ? <Button title="Complete My Profile" variant="outline" onPress={() => navigation.navigate('EditProfile')} style={styles.completionButton} /> : <Text style={styles.completionReady}>✓ Your profile is ready for better matches.</Text>}
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>YOUR DINING PROFILE</Text>
@@ -138,6 +154,15 @@ const styles = StyleSheet.create({
   verificationButton: { marginTop: 10, paddingVertical: 10 },
   verifiedCard: { backgroundColor: '#EEF9F0', borderWidth: 1, borderColor: '#BFE5C7', borderRadius: 14, padding: 13, marginBottom: 12 },
   verifiedText: { color: colors.success, fontSize: 13, fontWeight: '700' },
+  completionCard: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 16, marginBottom: 12 },
+  completionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  completionTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  completionText: { color: colors.textMuted, fontSize: 13, marginTop: 4 },
+  completionPercent: { color: colors.primary, fontSize: 21, fontWeight: '700' },
+  progressTrack: { height: 8, borderRadius: 4, overflow: 'hidden', backgroundColor: colors.surface, marginTop: 14 },
+  progressFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 4 },
+  completionButton: { marginTop: 14, paddingVertical: 10 },
+  completionReady: { color: colors.success, fontSize: 13, fontWeight: '600', marginTop: 14 },
   section: { backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 12 },
   sectionTitle: { fontSize: 11, letterSpacing: 0.7, fontWeight: '700', color: colors.textMuted, marginBottom: 14 },
   sectionHeading: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 10 },

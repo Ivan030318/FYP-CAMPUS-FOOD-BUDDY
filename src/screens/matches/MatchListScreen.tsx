@@ -29,6 +29,9 @@ export default function MatchListScreen({ navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState('');
   const [retryKey, setRetryKey] = useState(0);
+  const [mealTimeOnly, setMealTimeOnly] = useState(false);
+  const [foodOnly, setFoodOnly] = useState(false);
+  const [sameLocationOnly, setSameLocationOnly] = useState(false);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -67,6 +70,13 @@ export default function MatchListScreen({ navigation }: Props) {
     profile.available_meal_times.length === 0 ||
     !profile.dining_location.trim();
 
+  const filteredMatches = matches.filter((match) =>
+    (!mealTimeOnly || match.sharedMealTimes.length > 0) &&
+    (!foodOnly || match.sharedFoodPreferences.length > 0) &&
+    (!sameLocationOnly || match.sameDiningLocation)
+  );
+  const hasFilters = mealTimeOnly || foodOnly || sameLocationOnly;
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -100,7 +110,7 @@ export default function MatchListScreen({ navigation }: Props) {
 
   return (
     <FlatList
-      data={matches}
+      data={filteredMatches}
       keyExtractor={(item) => item.profile.user_id}
       contentContainerStyle={styles.list}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -109,13 +119,22 @@ export default function MatchListScreen({ navigation }: Props) {
           <Text style={styles.kicker}>DISCOVER</Text>
           <Text style={styles.pageTitle}>Your food circle</Text>
           <Text style={styles.pageSubtitle}>Compatible students based on time, food and location.</Text>
+          <View style={styles.filterHeader}>
+            <Text style={styles.filterTitle}>Filter matches</Text>
+            {hasFilters ? <Pressable onPress={() => { setMealTimeOnly(false); setFoodOnly(false); setSameLocationOnly(false); }}><Text style={styles.clearText}>Clear</Text></Pressable> : null}
+          </View>
+          <View style={styles.filterRow}>
+            <Tag label="Shared meal time" selected={mealTimeOnly} onPress={() => setMealTimeOnly((value) => !value)} />
+            <Tag label="Shared food" selected={foodOnly} onPress={() => setFoodOnly((value) => !value)} />
+            <Tag label="Same spot" selected={sameLocationOnly} onPress={() => setSameLocationOnly((value) => !value)} />
+          </View>
         </View>
       }
       ListEmptyComponent={
         <View style={styles.centered}>
-          <Text style={styles.emptyTitle}>No match available</Text>
+          <Text style={styles.emptyTitle}>{hasFilters ? 'No matches for these filters' : 'No match available'}</Text>
           <Text style={styles.emptySubtitle}>
-            No suitable food buddies found. Try adding more food preferences, meal times or locations.
+            {hasFilters ? 'Try removing a filter to see more compatible students.' : 'No suitable food buddies found. Try adding more food preferences, meal times or locations.'}
           </Text>
         </View>
       }
@@ -164,6 +183,10 @@ const styles = StyleSheet.create({
   kicker: { fontSize: 11, letterSpacing: 0.5, fontWeight: '700', color: colors.textMuted, marginBottom: 5 },
   pageTitle: { fontSize: 30, fontWeight: '700', color: colors.text },
   pageSubtitle: { fontSize: 13, lineHeight: 19, color: colors.textMuted, marginTop: 6, maxWidth: 300 },
+  filterHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 10 },
+  filterTitle: { fontSize: 13, fontWeight: '700', color: colors.text },
+  clearText: { color: colors.primary, fontSize: 13, fontWeight: '600' },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap' },
   card: {
     flexDirection: 'row',
     backgroundColor: colors.card,
