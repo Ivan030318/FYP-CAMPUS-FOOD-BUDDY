@@ -132,6 +132,12 @@ export default function ProfileScreen({ navigation }: Props) {
         style={styles.button}
       />
       <Button
+        title="Settings"
+        variant="outline"
+        onPress={() => navigation.navigate('Settings')}
+        style={styles.button}
+      />
+      <Button
         title="Log Out"
         variant="danger"
         onPress={handleLogout}
