@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, Alert } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, Alert, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { cancelBuddyRequest, subscribeToMyRequests, respondToRequest } from '../../services/requestService';
@@ -24,6 +24,7 @@ export default function RequestsScreen() {
   const [actionError, setActionError] = useState('');
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -94,6 +95,15 @@ export default function RequestsScreen() {
     }
   };
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setRetryKey((key) => key + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!loading) setRefreshing(false);
+  }, [loading]);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -105,7 +115,6 @@ export default function RequestsScreen() {
   if (loadError) return <LoadError title="Could not load requests" onRetry={() => setRetryKey((key) => key + 1)} />;
 
   const data = tab === 'incoming' ? incoming : outgoing;
-
   return (
     <View style={styles.flex}>
       <View style={[styles.hero, { paddingTop: insets.top + 12 }]}>
@@ -132,6 +141,7 @@ export default function RequestsScreen() {
         data={data}
         keyExtractor={(item) => item.request_id}
         contentContainerStyle={styles.list}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         ListEmptyComponent={
           <View style={styles.centered}>
             <Text style={styles.emptyEmoji}>{tab === 'incoming' ? '🤝' : '📨'}</Text>

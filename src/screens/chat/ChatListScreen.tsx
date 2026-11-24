@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
 import { hasUnreadMessage, subscribeToMyChats } from '../../services/chatService';
@@ -26,6 +26,7 @@ export default function ChatListScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -53,6 +54,15 @@ export default function ChatListScreen({ navigation }: Props) {
     getUsersByIds(otherIds).then(setUsersById);
   }, [chats, firebaseUser]);
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setRetryKey((key) => key + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!loading) setRefreshing(false);
+  }, [loading]);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -68,6 +78,7 @@ export default function ChatListScreen({ navigation }: Props) {
       data={chats}
       keyExtractor={(item) => item.chat_id}
       contentContainerStyle={styles.list}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       ListHeaderComponent={
         <View style={styles.intro}>
           <Text style={styles.kicker}>KEEP IN TOUCH</Text>

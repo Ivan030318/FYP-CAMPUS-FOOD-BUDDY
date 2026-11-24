@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
@@ -38,6 +38,7 @@ export default function UpdatesScreen() {
   const [chatsLoaded, setChatsLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -110,6 +111,15 @@ export default function UpdatesScreen() {
     if (ids.length) getUsersByIds(ids).then(setUsersById);
   }, [updates]);
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setRetryKey((key) => key + 1);
+  }, []);
+
+  useEffect(() => {
+    if (requestsLoaded && chatsLoaded) setRefreshing(false);
+  }, [requestsLoaded, chatsLoaded]);
+
   if (loadError) {
     return <LoadError title="Could not load updates" onRetry={() => setRetryKey((key) => key + 1)} />;
   }
@@ -123,6 +133,7 @@ export default function UpdatesScreen() {
       data={updates}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.list}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       ListHeaderComponent={<View style={[styles.intro, { paddingTop: insets.top + 12 }]}><Text style={styles.kicker}>STAY UPDATED</Text><Text style={styles.title}>Updates</Text><Text style={styles.helper}>Requests and chat activity in one place.</Text></View>}
       ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyEmoji}>🔔</Text><Text style={styles.emptyTitle}>Nothing new yet</Text><Text style={styles.emptyText}>Request and chat activity will appear here, so you never miss a food buddy update.</Text></View>}
       renderItem={({ item }) => {
