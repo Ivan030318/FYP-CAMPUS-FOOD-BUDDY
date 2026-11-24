@@ -153,6 +153,7 @@ service cloud.firestore {
         ])
         && request.resource.data.reporter_id == request.auth.uid
         && request.resource.data.reporter_id != request.resource.data.reported_user_id
+        && reportId == request.resource.data.reporter_id + '_' + request.resource.data.reported_user_id
         && request.resource.data.status == 'pending'
         && request.resource.data.reason is string
         && request.resource.data.reason.size() > 0

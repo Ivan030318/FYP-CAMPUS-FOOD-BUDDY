@@ -1,22 +1,35 @@
-import { addDoc, collection, doc, getDoc, onSnapshot, query, updateDoc, type Unsubscribe } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, query, setDoc, updateDoc, type Unsubscribe } from 'firebase/firestore';
 import { firestore } from '../config/firebase';
 import type { Report, ReportStatus } from '../types';
 
 const reportsCol = collection(firestore, 'reports');
 const adminUsersCol = collection(firestore, 'adminUsers');
 
+export class ReportError extends Error {}
+
+export function getReportId(reporterId: string, reportedUserId: string): string {
+  return `${reporterId}_${reportedUserId}`;
+}
+
 export async function submitReport(
   reporterId: string,
   reportedUserId: string,
   reason: string
 ): Promise<void> {
-  await addDoc(reportsCol, {
-    reporter_id: reporterId,
-    reported_user_id: reportedUserId,
-    reason,
-    status: 'pending' as ReportStatus,
-    submitted_at: Date.now(),
-  });
+  try {
+    await setDoc(doc(reportsCol, getReportId(reporterId, reportedUserId)), {
+      reporter_id: reporterId,
+      reported_user_id: reportedUserId,
+      reason,
+      status: 'pending' as ReportStatus,
+      submitted_at: Date.now(),
+    });
+  } catch (error: any) {
+    if (error?.code === 'permission-denied') {
+      throw new ReportError('You may only submit one report for the same student.');
+    }
+    throw error;
+  }
 }
 
 /** Checks the signed-in user's own admin marker. Other users' role records are never readable. */

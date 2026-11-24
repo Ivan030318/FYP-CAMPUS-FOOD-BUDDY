@@ -22,8 +22,8 @@ Built with **React Native (Expo)** and **Firebase** per the FYP1 system design
   live badge for pending incoming requests.
 - **Buddy history** — list of all accepted food buddy connections (not a claim that students
   actually dined together).
-- **Report / Block** — report a user or block/unblock them. A block hides the user from matching
-  and prevents new requests in either direction.
+- **Report / Block** — report a user once per pair or block/unblock them. A block hides the user
+  from matching and prevents new requests in either direction.
 - **Admin report review** — a role-protected dashboard lets an assigned admin review reports and
   mark them resolved.
 

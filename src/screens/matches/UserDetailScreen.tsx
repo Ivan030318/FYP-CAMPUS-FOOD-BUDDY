@@ -100,6 +100,17 @@ export default function UserDetailScreen({ route, navigation }: Props) {
     }
   };
 
+  const confirmBlock = () => {
+    Alert.alert(
+      `Block ${candidateProfile.display_name}?`,
+      'They will be hidden from Matches and neither of you can send a new buddy request.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Block User', style: 'destructive', onPress: () => { void handleBlock(); } },
+      ]
+    );
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
@@ -189,7 +200,7 @@ export default function UserDetailScreen({ route, navigation }: Props) {
         </View>
       )}
 
-      <Button title="Block User" variant="danger" onPress={handleBlock} loading={blocking} style={styles.button} />
+      <Button title="Block User" variant="danger" onPress={confirmBlock} loading={blocking} style={styles.button} />
       {blockError ? <Text style={styles.requestError}>{blockError}</Text> : null}
     </ScrollView>
   );

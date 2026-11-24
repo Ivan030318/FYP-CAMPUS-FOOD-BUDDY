@@ -14,7 +14,7 @@ each test when preparing the FYP demonstration.
 | T07 | Accept + chat | Student B accepts the request. | Both students see one chat; Buddy History lists the connection. |
 | T08 | Live message + unread state | Send a message from Student A to Student B while Student B is outside the chat. | Message and chat preview update; Student B sees a Chats badge and unread dot, which clear after opening the chat. |
 | T09 | Block | Block a student from their profile. | They disappear from Matches and cannot receive a new request. |
-| T10 | Report | Submit a report with a reason. | The report is created and unavailable to normal users. |
+| T10 | Report | Submit a report with a reason, then try reporting the same student again. | The first report is created and unavailable to normal users; the duplicate is rejected. |
 | T11 | Admin review | Sign in as the assigned admin and open Profile → Admin: Review Reports. | Report is visible and can be marked Resolved. |
 | T12 | Security check | Sign in as a normal user and try to access admin-related data through the app. | Admin dashboard is hidden and report records are not readable. |
 
