@@ -123,6 +123,16 @@ Chapter 3.4), or press `a` to launch an Android emulator, or `w` for a quick web
 Create two accounts (e.g. on two phones, or one phone + web preview) to test matching,
 sending a request, accepting it, and chatting.
 
+### Quality checks
+
+Run the same checks used by GitHub Actions before a demo or push:
+
+```bash
+npm run verify
+```
+
+This runs the TypeScript check and produces a web build in the ignored `dist/` folder.
+
 ## Data model
 
 Matches the ERD/Data Dictionary in FYP1 Chapter 4, implemented as Firestore collections:
