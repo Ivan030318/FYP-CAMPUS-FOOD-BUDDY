@@ -27,8 +27,18 @@ export default function RegisterScreen({ navigation }: Props) {
   const [error, setError] = useState('');
 
   const handleRegister = async () => {
-    if (!displayName.trim() || !email.trim() || !password) {
+    const normalizedName = displayName.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedName || !normalizedEmail || !password) {
       setError('Please fill in all fields.');
+      return;
+    }
+    if (normalizedName.length < 2 || normalizedName.length > 50) {
+      setError('Display name must be between 2 and 50 characters.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setError('Please enter a valid email address.');
       return;
     }
     if (password.length < 6) {
@@ -42,7 +52,7 @@ export default function RegisterScreen({ navigation }: Props) {
     setError('');
     setLoading(true);
     try {
-      await register(email.trim(), password, displayName.trim());
+      await register(normalizedEmail, password, normalizedName);
     } catch (err: any) {
       setError(
         err?.code === 'auth/email-already-in-use'
@@ -74,11 +84,13 @@ export default function RegisterScreen({ navigation }: Props) {
             label="Display Name"
             placeholder="Ivan Tan"
             value={displayName}
+            maxLength={50}
             onChangeText={(value) => {
               setDisplayName(value);
               setError('');
             }}
           />
+          <Text style={styles.characterCount}>{displayName.length}/50</Text>
           <TextField
             label="University Email"
             placeholder="you@student.mmu.edu.my"
@@ -165,6 +177,7 @@ const styles = StyleSheet.create({
     marginTop: -4,
     marginBottom: 12,
   },
+  characterCount: { color: colors.textMuted, fontSize: 10, textAlign: 'right', marginTop: -14, marginBottom: 18 },
   secondaryButton: {
     marginTop: 12,
   },
