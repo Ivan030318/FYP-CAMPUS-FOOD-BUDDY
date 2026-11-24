@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
-import { subscribeToMyRequests, respondToRequest } from '../../services/requestService';
+import { cancelBuddyRequest, subscribeToMyRequests, respondToRequest } from '../../services/requestService';
 import { getUsersByIds } from '../../services/userService';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
@@ -20,6 +20,7 @@ export default function RequestsScreen() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('incoming');
   const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -73,6 +74,26 @@ export default function RequestsScreen() {
     }
   };
 
+  const confirmCancel = (request: FoodBuddyRequest, studentName: string) => {
+    Alert.alert('Cancel request?', `Your pending request to ${studentName} will be removed.`, [
+      { text: 'Keep Request', style: 'cancel' },
+      { text: 'Cancel Request', style: 'destructive', onPress: () => { void handleCancel(request); } },
+    ]);
+  };
+
+  const handleCancel = async (request: FoodBuddyRequest) => {
+    if (!firebaseUser) return;
+    setCancellingId(request.request_id);
+    setActionError('');
+    try {
+      await cancelBuddyRequest(request, firebaseUser.uid);
+    } catch (err: any) {
+      setActionError(err?.message ?? 'Could not cancel this request. Please try again.');
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -113,9 +134,9 @@ export default function RequestsScreen() {
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.centered}>
-            <Text style={styles.emptyText}>
-              {tab === 'incoming' ? 'No incoming requests right now.' : "You haven't sent any requests yet."}
-            </Text>
+            <Text style={styles.emptyEmoji}>{tab === 'incoming' ? '🤝' : '📨'}</Text>
+            <Text style={styles.emptyTitle}>{tab === 'incoming' ? 'No incoming requests' : 'No sent requests'}</Text>
+            <Text style={styles.emptyText}>{tab === 'incoming' ? 'When another student wants to dine with you, their request will appear here.' : 'Explore Matches and send a request to start a new food connection.'}</Text>
           </View>
         }
         renderItem={({ item }) => {
@@ -147,6 +168,9 @@ export default function RequestsScreen() {
                     />
                   </View>
                 )}
+                {tab === 'outgoing' && item.status === 'pending' ? (
+                  <Button title="Cancel Request" variant="outline" onPress={() => confirmCancel(item, otherName)} loading={cancellingId === item.request_id} style={styles.cancelButton} />
+                ) : null}
               </View>
             </View>
           );
@@ -159,7 +183,9 @@ export default function RequestsScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { color: colors.textMuted, textAlign: 'center' },
+  emptyEmoji: { fontSize: 34, marginBottom: 10 },
+  emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 6 },
+  emptyText: { color: colors.textMuted, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
   hero: { backgroundColor: colors.background, paddingHorizontal: 20, paddingBottom: 14 },
   kicker: { fontSize: 11, letterSpacing: 0.5, fontWeight: '700', color: colors.textMuted, marginBottom: 5 },
   title: { fontSize: 30, fontWeight: '700', color: colors.text },
@@ -200,4 +226,5 @@ const styles = StyleSheet.create({
   status: { fontSize: 13, lineHeight: 18, color: colors.textMuted, marginTop: 4 },
   actions: { flexDirection: 'row', marginTop: 10 },
   actionButton: { flex: 1, marginRight: 8, paddingVertical: 10 },
+  cancelButton: { marginTop: 12, paddingVertical: 10 },
 });

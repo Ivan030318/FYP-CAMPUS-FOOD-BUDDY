@@ -76,9 +76,9 @@ export default function ChatListScreen({ navigation }: Props) {
       }
       ListEmptyComponent={
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>
-            No chats yet. Accept a food buddy request to start chatting!
-          </Text>
+          <Text style={styles.emptyEmoji}>💬</Text>
+          <Text style={styles.emptyTitle}>No conversations yet</Text>
+          <Text style={styles.emptyText}>Once a food buddy request is accepted, you can start planning your next meal here.</Text>
         </View>
       }
       renderItem={({ item }) => {
@@ -116,7 +116,9 @@ export default function ChatListScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  emptyText: { color: colors.textMuted, textAlign: 'center' },
+  emptyEmoji: { fontSize: 34, marginBottom: 10 },
+  emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 6 },
+  emptyText: { color: colors.textMuted, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
   list: { padding: 20, paddingBottom: 112, flexGrow: 1 },
   intro: { paddingBottom: 20 },
   kicker: { fontSize: 11, letterSpacing: 0.5, fontWeight: '700', color: colors.textMuted, marginBottom: 5 },

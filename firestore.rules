@@ -89,7 +89,10 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'responded_at'])
         && (request.resource.data.status == 'accepted' || request.resource.data.status == 'rejected')
         && request.resource.data.responded_at is number;
-      allow delete: if false;
+      // The sender can withdraw an unanswered request; accepted/rejected records stay immutable.
+      allow delete: if isActiveUser()
+        && resource.data.requester_id == request.auth.uid
+        && resource.data.status == 'pending';
     }
 
     // Block records are never readable from the client. Rules use exists() above to reject

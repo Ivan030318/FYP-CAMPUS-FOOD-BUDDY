@@ -124,7 +124,7 @@ export default function UpdatesScreen() {
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.list}
       ListHeaderComponent={<View style={[styles.intro, { paddingTop: insets.top + 12 }]}><Text style={styles.kicker}>STAY UPDATED</Text><Text style={styles.title}>Updates</Text><Text style={styles.helper}>Requests and chat activity in one place.</Text></View>}
-      ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyText}>No updates yet. Find a food buddy to get started!</Text></View>}
+      ListEmptyComponent={<View style={styles.centered}><Text style={styles.emptyEmoji}>🔔</Text><Text style={styles.emptyTitle}>Nothing new yet</Text><Text style={styles.emptyText}>Request and chat activity will appear here, so you never miss a food buddy update.</Text></View>}
       renderItem={({ item }) => {
         const other = usersById[item.otherUserId];
         const otherName = other?.display_name ?? 'Student';
@@ -155,7 +155,9 @@ const styles = StyleSheet.create({
   kicker: { fontSize: 11, letterSpacing: 0.5, fontWeight: '700', color: colors.textMuted, marginBottom: 5 },
   title: { fontSize: 30, fontWeight: '700', color: colors.text },
   helper: { fontSize: 13, color: colors.textMuted, marginTop: 5 },
-  emptyText: { color: colors.textMuted, textAlign: 'center' },
+  emptyEmoji: { fontSize: 34, marginBottom: 10 },
+  emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: 6 },
+  emptyText: { color: colors.textMuted, textAlign: 'center', lineHeight: 20, maxWidth: 280 },
   card: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
   body: { flex: 1, marginLeft: 12 },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },

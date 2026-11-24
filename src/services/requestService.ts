@@ -99,6 +99,19 @@ export async function getMyRequests(uid: string): Promise<FoodBuddyRequest[]> {
   );
 }
 
+/** The sender may withdraw only their own pending request. */
+export async function cancelBuddyRequest(request: FoodBuddyRequest, requesterId: string): Promise<void> {
+  const requestRef = doc(requestsCol, request.request_id);
+  await runTransaction(firestore, async (transaction) => {
+    const current = await transaction.get(requestRef);
+    if (!current.exists()) throw new BuddyRequestError('This request no longer exists.');
+    const data = current.data() as Omit<FoodBuddyRequest, 'request_id'>;
+    if (data.requester_id !== requesterId) throw new BuddyRequestError('Only the sender can cancel this request.');
+    if (data.status !== 'pending') throw new BuddyRequestError('Only pending requests can be cancelled.');
+    transaction.delete(requestRef);
+  });
+}
+
 /**
  * Only the request recipient can accept/reject a pending request. An accepted request and its
  * deterministic chat are written atomically so duplicate chats cannot be created.
