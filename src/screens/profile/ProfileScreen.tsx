@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
@@ -6,20 +6,13 @@ import { Avatar } from '../../components/Avatar';
 import { Tag } from '../../components/Tag';
 import { Button } from '../../components/Button';
 import { colors } from '../../theme/colors';
-import { isAdmin } from '../../services/reportService';
 import type { ProfileStackParamList } from '../../navigation/MainTabs';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileHome'>;
 
 export default function ProfileScreen({ navigation }: Props) {
-  const { profile, firebaseUser, logout } = useAuth();
+  const { profile, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
-  const [admin, setAdmin] = useState(false);
-
-  useEffect(() => {
-    if (!firebaseUser) return;
-    isAdmin(firebaseUser.uid).then(setAdmin).catch(() => setAdmin(false));
-  }, [firebaseUser]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -87,7 +80,6 @@ export default function ProfileScreen({ navigation }: Props) {
         onPress={() => navigation.navigate('BlockedUsers')}
         style={styles.button}
       />
-      {admin ? <Button title="Admin: Review Reports" variant="outline" onPress={() => navigation.navigate('AdminReports')} style={styles.button} /> : null}
       <Button
         title="Log Out"
         variant="danger"

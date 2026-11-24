@@ -25,14 +25,21 @@ export async function isAdmin(uid: string): Promise<boolean> {
   return snapshot.exists();
 }
 
-export function subscribeToReports(callback: (reports: Report[]) => void): Unsubscribe {
-  return onSnapshot(query(reportsCol), (snapshot) => {
-    callback(
-      snapshot.docs
-        .map((item) => ({ report_id: item.id, ...item.data() } as Report))
-        .sort((first, second) => second.submitted_at - first.submitted_at)
-    );
-  });
+export function subscribeToReports(
+  callback: (reports: Report[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  return onSnapshot(
+    query(reportsCol),
+    (snapshot) => {
+      callback(
+        snapshot.docs
+          .map((item) => ({ report_id: item.id, ...item.data() } as Report))
+          .sort((first, second) => second.submitted_at - first.submitted_at)
+      );
+    },
+    onError
+  );
 }
 
 export async function resolveReport(reportId: string): Promise<void> {

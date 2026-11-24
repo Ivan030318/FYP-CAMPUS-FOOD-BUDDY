@@ -10,12 +10,14 @@ import {
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { createUserProfile, getUserProfile } from '../services/userService';
+import { isAdmin as checkIsAdmin } from '../services/reportService';
 import type { UserProfile } from '../types';
 
 interface AuthContextValue {
   firebaseUser: User | null;
   profile: UserProfile | null;
   initializing: boolean;
+  isAdmin: boolean;
   profileError: string | null;
   refreshProfile: () => Promise<void>;
   retryProfile: () => Promise<void>;
@@ -31,6 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
   const loadProfile = useCallback(async (uid: string) => {
@@ -39,8 +42,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const p = await getUserProfile(uid);
       if (!p) throw new Error('Your account profile could not be found.');
       setProfile(p);
+      try {
+        setIsAdmin(await checkIsAdmin(uid));
+      } catch {
+        // If the role document is not available yet, keep the student app usable.
+        setIsAdmin(false);
+      }
     } catch {
       setProfile(null);
+      setIsAdmin(false);
       setProfileError('Could not load your profile. Check your connection and try again.');
     }
   }, []);
@@ -53,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await loadProfile(user.uid);
         } else {
           setProfile(null);
+          setIsAdmin(false);
           setProfileError(null);
         }
       } finally {
@@ -79,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         university_email: email,
       });
       setProfile(created);
+      setIsAdmin(false);
     },
     []
   );
@@ -97,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ firebaseUser, profile, initializing, profileError, refreshProfile, retryProfile, register, login, resetPassword, logout }}
+      value={{ firebaseUser, profile, initializing, isAdmin, profileError, refreshProfile, retryProfile, register, login, resetPassword, logout }}
     >
       {children}
     </AuthContext.Provider>

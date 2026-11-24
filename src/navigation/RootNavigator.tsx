@@ -4,11 +4,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import AuthStack from './AuthStack';
 import MainTabs from './MainTabs';
+import AdminNavigator from './AdminNavigator';
 import { colors } from '../theme/colors';
 import { LoadError } from '../components/LoadError';
 
 export default function RootNavigator() {
-  const { firebaseUser, initializing, profileError, retryProfile } = useAuth();
+  const { firebaseUser, initializing, isAdmin, profileError, retryProfile } = useAuth();
 
   if (initializing) {
     return (
@@ -23,7 +24,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>{firebaseUser ? <MainTabs /> : <AuthStack />}</NavigationContainer>
+    <NavigationContainer>{firebaseUser ? (isAdmin ? <AdminNavigator /> : <MainTabs />) : <AuthStack />}</NavigationContainer>
   );
 }
 

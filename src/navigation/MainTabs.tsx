@@ -12,7 +12,6 @@ import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import DiningHistoryScreen from '../screens/history/DiningHistoryScreen';
 import BlockedUsersScreen from '../screens/profile/BlockedUsersScreen';
 import UpdatesScreen from '../screens/updates/UpdatesScreen';
-import AdminReportsScreen from '../screens/admin/AdminReportsScreen';
 import { colors } from '../theme/colors';
 import type { MatchCandidate } from '../services/matchService';
 import { useAuth } from '../context/AuthContext';
@@ -35,7 +34,6 @@ export type ProfileStackParamList = {
   EditProfile: undefined;
   DiningHistory: undefined;
   BlockedUsers: undefined;
-  AdminReports: undefined;
 };
 
 export type MainTabParamList = {
@@ -108,7 +106,6 @@ function ProfileStack() {
         options={{ title: 'Buddy History' }}
       />
       <ProfileStackNav.Screen name="BlockedUsers" component={BlockedUsersScreen} options={{ title: 'Blocked Users' }} />
-      <ProfileStackNav.Screen name="AdminReports" component={AdminReportsScreen} options={{ title: 'Admin Reports' }} />
     </ProfileStackNav.Navigator>
   );
 }

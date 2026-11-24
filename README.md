@@ -104,7 +104,7 @@ After publishing the updated [`firestore.rules`](firestore.rules), assign the ad
 1. Firebase Console → **Authentication** → **Users** → copy the UID of your own test account.
 2. Firestore Database → start collection **adminUsers** → set the document ID to that UID.
 3. Add one field: `role` (string) with the value `admin`, then save.
-4. Sign out and sign in again. **Admin: Review Reports** appears in Profile.
+4. Sign out and sign in again. That account opens the separate **Admin Console** directly.
 
 Only a Firebase Console administrator can create this document; the app's own Firestore Rules do
 not permit any user to assign themselves a role.
