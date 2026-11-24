@@ -32,6 +32,7 @@ export default function MatchListScreen({ navigation }: Props) {
   const [mealTimeOnly, setMealTimeOnly] = useState(false);
   const [foodOnly, setFoodOnly] = useState(false);
   const [sameLocationOnly, setSameLocationOnly] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -135,15 +136,20 @@ export default function MatchListScreen({ navigation }: Props) {
               <Text style={styles.viewProfile}>View compatibility details  ›</Text>
             </Pressable>
           ) : null}
-          <View style={styles.filterHeader}>
-            <Text style={styles.filterTitle}>Filter matches</Text>
-            {hasFilters ? <Pressable onPress={() => { setMealTimeOnly(false); setFoodOnly(false); setSameLocationOnly(false); }}><Text style={styles.clearText}>Clear</Text></Pressable> : null}
+          <View style={styles.refineRow}>
+            <Text style={styles.resultCount}>{filteredMatches.length} compatible {filteredMatches.length === 1 ? 'student' : 'students'}</Text>
+            <Pressable onPress={() => setShowFilters((visible) => !visible)} style={[styles.refineButton, hasFilters && styles.refineButtonActive]}>
+              <Text style={[styles.refineText, hasFilters && styles.refineTextActive]}>{hasFilters ? 'Refined' : 'Refine'} {showFilters ? '⌃' : '⌄'}</Text>
+            </Pressable>
           </View>
-          <View style={styles.filterRow}>
-            <Tag label="Shared meal time" selected={mealTimeOnly} onPress={() => setMealTimeOnly((value) => !value)} />
-            <Tag label="Shared food" selected={foodOnly} onPress={() => setFoodOnly((value) => !value)} />
-            <Tag label="Same spot" selected={sameLocationOnly} onPress={() => setSameLocationOnly((value) => !value)} />
-          </View>
+          {showFilters ? <View style={styles.filterPanel}>
+            <View style={styles.filterPanelHeader}><Text style={styles.filterTitle}>Show students with</Text>{hasFilters ? <Pressable onPress={() => { setMealTimeOnly(false); setFoodOnly(false); setSameLocationOnly(false); }}><Text style={styles.clearText}>Clear</Text></Pressable> : null}</View>
+            <View style={styles.filterRow}>
+              <Tag label="Same meal time" selected={mealTimeOnly} onPress={() => setMealTimeOnly((value) => !value)} />
+              <Tag label="Same food" selected={foodOnly} onPress={() => setFoodOnly((value) => !value)} />
+              <Tag label="Same spot" selected={sameLocationOnly} onPress={() => setSameLocationOnly((value) => !value)} />
+            </View>
+          </View> : null}
           {topMatch ? <Text style={styles.browseTitle}>MORE COMPATIBLE STUDENTS</Text> : null}
         </View>
       }
@@ -210,8 +216,15 @@ const styles = StyleSheet.create({
   matchPercent: { color: '#D9EBFF', fontSize: 11, fontWeight: '700', alignSelf: 'flex-start', marginTop: 12 },
   topMatchTags: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 16 },
   viewProfile: { color: '#fff', fontSize: 13, fontWeight: '700', marginTop: 4 },
-  filterHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 10 },
-  filterTitle: { fontSize: 13, fontWeight: '700', color: colors.text },
+  refineRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18 },
+  resultCount: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
+  refineButton: { borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 7 },
+  refineButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  refineText: { color: colors.text, fontSize: 12, fontWeight: '700' },
+  refineTextActive: { color: '#fff' },
+  filterPanel: { marginTop: 10, padding: 12, backgroundColor: colors.card, borderRadius: 14, borderWidth: 1, borderColor: colors.border },
+  filterPanelHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 },
+  filterTitle: { fontSize: 12, fontWeight: '700', color: colors.textMuted },
   clearText: { color: colors.primary, fontSize: 13, fontWeight: '600' },
   filterRow: { flexDirection: 'row', flexWrap: 'wrap' },
   browseTitle: { color: colors.textMuted, fontSize: 11, letterSpacing: 0.7, fontWeight: '700', marginTop: 18, marginBottom: 10 },
