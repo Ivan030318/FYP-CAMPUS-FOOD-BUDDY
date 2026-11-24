@@ -30,7 +30,7 @@ function formatTime(timestamp: number): string {
 export default function UpdatesScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, profile } = useAuth();
   const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [usersById, setUsersById] = useState<Record<string, PublicUserProfile>>({});
@@ -94,6 +94,7 @@ export default function UpdatesScreen() {
     const chatUpdates = chats.flatMap((chat) => {
       if (chat.last_message_sender_id && chat.last_message_sender_id === firebaseUser.uid) return [];
       const otherUserId = chat.user_ids.find((id) => id !== firebaseUser.uid) ?? firebaseUser.uid;
+      if (profile?.blocked_users.includes(otherUserId)) return [];
       return [{
         id: `chat-${chat.chat_id}`,
         kind: 'chat' as const,
@@ -104,7 +105,7 @@ export default function UpdatesScreen() {
       }];
     });
     return [...requestUpdates, ...chatUpdates].sort((a, b) => b.timestamp - a.timestamp);
-  }, [requests, chats, firebaseUser]);
+  }, [requests, chats, firebaseUser, profile]);
 
   useEffect(() => {
     const ids = Array.from(new Set(updates.map((item) => item.otherUserId)));

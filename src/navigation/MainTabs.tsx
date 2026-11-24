@@ -121,7 +121,7 @@ const TAB_ICONS: Record<keyof MainTabParamList, string> = {
 
 export default function MainTabs() {
   const insets = useSafeAreaInsets();
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, profile } = useAuth();
   const [requests, setRequests] = useState<FoodBuddyRequest[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
 
@@ -140,8 +140,11 @@ export default function MainTabs() {
     [requests, firebaseUser]
   );
   const unreadChatCount = useMemo(
-    () => firebaseUser ? chats.filter((chat) => hasUnreadMessage(chat, firebaseUser.uid)).length : 0,
-    [chats, firebaseUser]
+    () => firebaseUser ? chats.filter((chat) => {
+      const otherUserId = chat.user_ids.find((id) => id !== firebaseUser.uid);
+      return !otherUserId || (!profile?.blocked_users.includes(otherUserId) && hasUnreadMessage(chat, firebaseUser.uid));
+    }).length : 0,
+    [chats, firebaseUser, profile]
   );
 
   return (

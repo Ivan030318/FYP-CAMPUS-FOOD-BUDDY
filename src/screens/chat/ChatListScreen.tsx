@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
@@ -20,13 +20,18 @@ function formatTime(ts: number): string {
 }
 
 export default function ChatListScreen({ navigation }: Props) {
-  const { firebaseUser } = useAuth();
+  const { firebaseUser, profile } = useAuth();
   const [chats, setChats] = useState<Chat[]>([]);
   const [usersById, setUsersById] = useState<Record<string, PublicUserProfile>>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+
+  const visibleChats = useMemo(() => chats.filter((chat) => {
+    const otherUserId = chat.user_ids.find((id) => id !== firebaseUser?.uid);
+    return !otherUserId || !profile?.blocked_users.includes(otherUserId);
+  }), [chats, firebaseUser, profile]);
 
   useEffect(() => {
     if (!firebaseUser) return;
@@ -48,11 +53,11 @@ export default function ChatListScreen({ navigation }: Props) {
 
   useEffect(() => {
     const otherIds = Array.from(
-      new Set(chats.flatMap((c) => c.user_ids).filter((id) => id !== firebaseUser?.uid))
+      new Set(visibleChats.flatMap((c) => c.user_ids).filter((id) => id !== firebaseUser?.uid))
     );
     if (otherIds.length === 0) return;
     getUsersByIds(otherIds).then(setUsersById);
-  }, [chats, firebaseUser]);
+  }, [visibleChats, firebaseUser]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -75,7 +80,7 @@ export default function ChatListScreen({ navigation }: Props) {
 
   return (
     <FlatList
-      data={chats}
+      data={visibleChats}
       keyExtractor={(item) => item.chat_id}
       contentContainerStyle={styles.list}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
