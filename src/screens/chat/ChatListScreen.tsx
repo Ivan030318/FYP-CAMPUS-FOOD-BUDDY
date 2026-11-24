@@ -104,6 +104,7 @@ export default function ChatListScreen({ navigation }: Props) {
               navigation.navigate('ChatRoom', {
                 chatId: item.chat_id,
                 otherUserName: otherName,
+                otherUserId: otherId ?? '',
               })
             }
           >

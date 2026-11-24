@@ -13,6 +13,13 @@ service cloud.firestore {
       return isSignedIn()
         && !exists(/databases/$(database)/documents/accountSuspensions/$(request.auth.uid));
     }
+    function isBlockedBetween(firstUid, secondUid) {
+      return exists(/databases/$(database)/documents/blocks/$(firstUid + '_' + secondUid))
+        || exists(/databases/$(database)/documents/blocks/$(secondUid + '_' + firstUid));
+    }
+    function isChatBlocked(chat) {
+      return isBlockedBetween(chat.data.user_ids[0], chat.data.user_ids[1]);
+    }
     function isValidPublicProfile(data, uid) {
       return data.user_id == uid
         && data.display_name is string
@@ -128,7 +135,7 @@ service cloud.firestore {
         && request.resource.data.last_read_at is map;
 
       // Participants and request linkage can never be changed after creation.
-      allow update: if isActiveUser() && isChatMember(resource)
+      allow update: if isActiveUser() && isChatMember(resource) && !isChatBlocked(resource)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'last_message_preview', 'last_message_time', 'last_message_sender_id', 'last_read_at'
         ]);
@@ -136,7 +143,9 @@ service cloud.firestore {
 
       match /messages/{messageId} {
         allow read: if isActiveUser() && isChatMember(get(/databases/$(database)/documents/chats/$(chatId)));
-        allow create: if isActiveUser() && isChatMember(get(/databases/$(database)/documents/chats/$(chatId)))
+        allow create: if isActiveUser()
+          && isChatMember(get(/databases/$(database)/documents/chats/$(chatId)))
+          && !isChatBlocked(get(/databases/$(database)/documents/chats/$(chatId)))
           && request.resource.data.keys().hasOnly(['chat_id', 'sender_id', 'text_content', 'sent_at'])
           && request.resource.data.chat_id == chatId
           && request.resource.data.sender_id == request.auth.uid

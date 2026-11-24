@@ -144,7 +144,7 @@ export default function UpdatesScreen() {
           <Pressable
             style={styles.card}
             onPress={() => item.chatId
-              ? navigation.navigate('ChatsTab', { screen: 'ChatRoom', params: { chatId: item.chatId, otherUserName: otherName } })
+              ? navigation.navigate('ChatsTab', { screen: 'ChatRoom', params: { chatId: item.chatId, otherUserName: otherName, otherUserId: item.otherUserId } })
               : navigation.navigate('RequestsTab')}
           >
             <Avatar name={otherName} uri={other?.profile_photo_url} />

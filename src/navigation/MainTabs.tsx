@@ -27,7 +27,7 @@ export type MatchesStackParamList = {
 
 export type ChatsStackParamList = {
   ChatList: undefined;
-  ChatRoom: { chatId: string; otherUserName: string };
+  ChatRoom: { chatId: string; otherUserName: string; otherUserId: string };
 };
 
 export type ProfileStackParamList = {
