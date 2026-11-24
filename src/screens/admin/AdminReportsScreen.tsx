@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { resolveReport, subscribeToReports } from '../../services/reportService';
 import { getUsersByIds } from '../../services/userService';
 import { Button } from '../../components/Button';
+import { LoadError } from '../../components/LoadError';
 import { colors } from '../../theme/colors';
 import type { PublicUserProfile, Report } from '../../types';
 
@@ -21,12 +22,24 @@ export default function AdminReportsScreen() {
   const [error, setError] = useState('');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'pending' | 'resolved' | 'all'>('pending');
+  const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
-    const unsubscribe = subscribeToReports(setReports);
-    setLoading(false);
+    setLoading(true);
+    setLoadError(false);
+    const unsubscribe = subscribeToReports(
+      (items) => {
+        setReports(items);
+        setLoading(false);
+      },
+      () => {
+        setLoadError(true);
+        setLoading(false);
+      }
+    );
     return unsubscribe;
-  }, []);
+  }, [retryKey]);
 
   useEffect(() => {
     const ids = Array.from(new Set(reports.flatMap((report) => [report.reporter_id, report.reported_user_id])));
@@ -55,6 +68,7 @@ export default function AdminReportsScreen() {
 
   if (!firebaseUser) return null;
   if (loading) return <View style={styles.centered}><ActivityIndicator color={colors.primary} /></View>;
+  if (loadError) return <LoadError title="Could not load reports" onRetry={() => setRetryKey((key) => key + 1)} />;
 
   return (
     <FlatList

@@ -16,6 +16,7 @@ import { getMyRequests } from '../../services/requestService';
 import { Avatar } from '../../components/Avatar';
 import { Tag } from '../../components/Tag';
 import { Button } from '../../components/Button';
+import { LoadError } from '../../components/LoadError';
 import { colors } from '../../theme/colors';
 import type { MatchesStackParamList } from '../../navigation/MainTabs';
 
@@ -27,6 +28,7 @@ export default function MatchListScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
 
   const load = useCallback(async () => {
     if (!profile) return;
@@ -51,7 +53,7 @@ export default function MatchListScreen({ navigation }: Props) {
   useEffect(() => {
     setLoading(true);
     load().finally(() => setLoading(false));
-  }, [load]);
+  }, [load, retryKey]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -92,6 +94,10 @@ export default function MatchListScreen({ navigation }: Props) {
     );
   }
 
+  if (loadError && matches.length === 0) {
+    return <LoadError title="Could not load matches" message={loadError} onRetry={() => setRetryKey((key) => key + 1)} />;
+  }
+
   return (
     <FlatList
       data={matches}
@@ -103,7 +109,6 @@ export default function MatchListScreen({ navigation }: Props) {
           <Text style={styles.kicker}>DISCOVER</Text>
           <Text style={styles.pageTitle}>Your food circle</Text>
           <Text style={styles.pageSubtitle}>Compatible students based on time, food and location.</Text>
-          {loadError ? <Text style={styles.errorText}>{loadError}</Text> : null}
         </View>
       }
       ListEmptyComponent={
@@ -159,7 +164,6 @@ const styles = StyleSheet.create({
   kicker: { fontSize: 11, letterSpacing: 0.5, fontWeight: '700', color: colors.textMuted, marginBottom: 5 },
   pageTitle: { fontSize: 30, fontWeight: '700', color: colors.text },
   pageSubtitle: { fontSize: 13, lineHeight: 19, color: colors.textMuted, marginTop: 6, maxWidth: 300 },
-  errorText: { color: colors.danger, backgroundColor: '#FFF1F0', borderRadius: 10, padding: 10, marginTop: 12, fontSize: 13 },
   card: {
     flexDirection: 'row',
     backgroundColor: colors.card,

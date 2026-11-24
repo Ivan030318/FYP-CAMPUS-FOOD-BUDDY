@@ -17,6 +17,7 @@ export default function BlockedUsersScreen() {
   const load = useCallback(async () => {
     if (!profile) return;
     setLoading(true);
+    setError('');
     try {
       const byId = await getUsersByIds(profile.blocked_users);
       setUsers(profile.blocked_users.map((id) => byId[id]).filter(Boolean));
@@ -59,6 +60,7 @@ export default function BlockedUsersScreen() {
           <Text style={styles.title}>Blocked users</Text>
           <Text style={styles.subtitle}>Blocked users cannot appear in your food buddy matches.</Text>
           {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <Button title="Try Again" variant="outline" onPress={load} style={styles.retryButton} /> : null}
         </View>
       }
       ListEmptyComponent={
@@ -96,6 +98,7 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   emptyText: { marginTop: 6, color: colors.textMuted, textAlign: 'center' },
   error: { color: colors.danger, backgroundColor: '#FFF1F0', padding: 10, borderRadius: 10, marginTop: 14, fontSize: 13 },
+  retryButton: { marginTop: 8, minHeight: 42, paddingVertical: 8 },
   card: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: 16, padding: 14, marginBottom: 12 },
   body: { flex: 1, marginLeft: 12 },
   name: { fontWeight: '700', fontSize: 15, color: colors.text },
