@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
 import { subscribeToReports } from '../../services/reportService';
@@ -62,7 +62,7 @@ export default function AdminHomeScreen({ navigation }: Props) {
   if (loadError) return <LoadError title="Could not load admin data" onRetry={() => setRetryKey((key) => key + 1)} />;
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <View style={styles.header}>
         <Text style={styles.kicker}>CAMPUS FOOD BUDDY</Text>
         <Text style={styles.title}>Admin Console</Text>
@@ -110,12 +110,13 @@ export default function AdminHomeScreen({ navigation }: Props) {
       <Button title="Review Reports" onPress={() => navigation.navigate('AdminReports')} />
       <Button title="Manage Suspended Accounts" variant="outline" onPress={() => navigation.navigate('AdminAccounts')} style={styles.manageButton} />
       <Button title="Log Out" variant="outline" onPress={handleLogout} loading={loggingOut} style={styles.logoutButton} />
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: 20 },
+  screen: { flex: 1, backgroundColor: colors.background },
+  container: { padding: 20, paddingBottom: 40, width: '100%', maxWidth: 900, alignSelf: 'center' },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   header: { paddingTop: 30, paddingBottom: 26 },
   kicker: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: colors.textMuted },
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   statCard: { flex: 1, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, borderRadius: 16, padding: 18 },
   pendingCard: { backgroundColor: colors.primarySoft, borderColor: '#C8E1FF' },
-  suspendedCard: { marginBottom: 16, backgroundColor: '#FFF8E8', borderColor: '#F3DDA5' },
+  suspendedCard: { flex: 0, marginBottom: 16, backgroundColor: '#FFF8E8', borderColor: '#F3DDA5' },
   insightCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border, padding: 16, marginBottom: 16 },
   insightLabel: { color: colors.textMuted, fontSize: 10, letterSpacing: 0.6, fontWeight: '700' },
   insightValue: { color: colors.text, fontSize: 17, fontWeight: '700', marginTop: 5 },
